@@ -357,9 +357,9 @@ tx_6m = growth_from_last(full_df, "num_txs", 180)
 # DISPLAY — VOLUME GROWTH
 # ==================================================================================================
 
-st.markdown("## 📊 Volume Change (Independent of Filters)")
+st.markdown("## 📊 Volume & Transactions Change (Independent of Filters)")
 
-v1, v2, v3 = st.columns(3)
+v1, v2, v3, t4, t5, t6 = st.columns(6)
 
 with v1:
     st.metric(
@@ -378,17 +378,6 @@ with v3:
         "6M Volume Growth",
         f"{volume_6m:.2f}%"
     )
-
-st.divider()
-
-
-# ==================================================================================================
-# DISPLAY — TRANSACTIONS GROWTH
-# ==================================================================================================
-
-st.markdown("## 🔄 Transaction Change (Independent of Filters)")
-
-t1, t2, t3 = st.columns(3)
 
 with t1:
     st.metric(
