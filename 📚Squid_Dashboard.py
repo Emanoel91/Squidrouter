@@ -379,19 +379,19 @@ with v3:
         f"{volume_6m:.2f}%"
     )
 
-with t1:
+with t4:
     st.metric(
         "7D Tx Growth",
         f"{tx_7d:.2f}%"
     )
 
-with t2:
+with t5:
     st.metric(
         "30D Tx Growth",
         f"{tx_30d:.2f}%"
     )
 
-with t3:
+with t6:
     st.metric(
         "6M Tx Growth",
         f"{tx_6m:.2f}%"
