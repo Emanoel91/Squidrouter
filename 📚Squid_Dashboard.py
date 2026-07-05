@@ -283,7 +283,7 @@ with kpi3:
 st.divider()
 
 # ==================================================================================================
-# FULL DATASET (FIXED - DAILY BASED CLEAN STRUCTURE)
+# FULL DATASET (FIXED TIMESTAMP + CLEAN DAILY AGGREGATION)
 # ==================================================================================================
 
 full_start = datetime(2024, 1, 1).date()
@@ -296,14 +296,16 @@ if full_df.empty:
     st.stop()
 
 # ==================================================================================================
-# FIX: convert timestamp → date (IMPORTANT)
+# 🔥 IMPORTANT FIX: timestamp is in MILLISECONDS
+# ==================================================================================================
+
+full_df["timestamp"] = pd.to_datetime(full_df["timestamp"], unit="ms")
+
+# ==================================================================================================
+# convert to daily granularity (correct method)
 # ==================================================================================================
 
 full_df["date"] = full_df["timestamp"].dt.date
-
-# ==================================================================================================
-# DAILY AGGREGATION (REAL CALENDAR DAYS)
-# ==================================================================================================
 
 full_df = (
     full_df.groupby("date", as_index=False)
@@ -319,13 +321,13 @@ full_df = (
     .reset_index(drop=True)
 )
 
-# convert back to datetime for safe slicing
+# convert back to datetime for slicing safety
 full_df["date"] = pd.to_datetime(full_df["date"])
 
 full_df = full_df.sort_values("date").reset_index(drop=True)
 
 # ==================================================================================================
-# GROWTH FUNCTION (WINDOW-BASED - CORRECT LOGIC)
+# GROWTH FUNCTION (WINDOW BASED - CORRECT)
 # ==================================================================================================
 
 def growth_from_window(df, col, days):
@@ -343,7 +345,7 @@ def growth_from_window(df, col, days):
 
 
 # ==================================================================================================
-# KPI CALCULATIONS (6 METRICS)
+# KPI CALCULATIONS
 # ==================================================================================================
 
 # Volume
@@ -358,7 +360,7 @@ tx_180d = growth_from_window(full_df, "num_txs", 180)
 
 
 # ==================================================================================================
-# DISPLAY (ONE ROW - 6 KPIs)
+# UI DISPLAY (ONE ROW)
 # ==================================================================================================
 
 st.markdown("## 📊 Growth KPIs (Volume & Transactions)")
