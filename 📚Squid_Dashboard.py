@@ -217,7 +217,7 @@ elif timeframe == "Week":
 elif timeframe == "Month":
     chart_df = (
         filtered_df.set_index("timestamp")
-        .resample("ME")
+        .resample("M")
         .sum()
         .reset_index()
     )
