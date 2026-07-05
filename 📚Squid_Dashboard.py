@@ -283,7 +283,7 @@ with kpi3:
 st.divider()
 
 # ==================================================================================================
-# FULL DATASET PREPARATION (IMPORTANT FIX: DAILY CONTINUITY)
+# FULL DATASET (FIXED - DAILY BASED CLEAN STRUCTURE)
 # ==================================================================================================
 
 full_start = datetime(2024, 1, 1).date()
@@ -295,9 +295,18 @@ if full_df.empty:
     st.warning("No full dataset available for growth metrics.")
     st.stop()
 
-# aggregate
+# ==================================================================================================
+# FIX: convert timestamp → date (IMPORTANT)
+# ==================================================================================================
+
+full_df["date"] = full_df["timestamp"].dt.date
+
+# ==================================================================================================
+# DAILY AGGREGATION (REAL CALENDAR DAYS)
+# ==================================================================================================
+
 full_df = (
-    full_df.groupby("timestamp", as_index=False)
+    full_df.groupby("date", as_index=False)
     .agg({
         "volume": "sum",
         "num_txs": "sum",
@@ -306,16 +315,17 @@ full_df = (
         "transfers_volume": "sum",
         "transfers_num_txs": "sum"
     })
-    .sort_values("timestamp")
+    .sort_values("date")
     .reset_index(drop=True)
 )
 
-# 🔥 CRITICAL FIX: make time series continuous (prevents zero KPI bug)
-full_df = full_df.set_index("timestamp").asfreq("D", fill_value=0).reset_index()
+# convert back to datetime for safe slicing
+full_df["date"] = pd.to_datetime(full_df["date"])
 
+full_df = full_df.sort_values("date").reset_index(drop=True)
 
 # ==================================================================================================
-# GROWTH FUNCTION (WINDOW-BASED CORRECT VERSION)
+# GROWTH FUNCTION (WINDOW-BASED - CORRECT LOGIC)
 # ==================================================================================================
 
 def growth_from_window(df, col, days):
@@ -323,51 +333,52 @@ def growth_from_window(df, col, days):
     if len(df) < days * 2:
         return 0
 
-    last_window = df[col].iloc[-days:].sum()
-    prev_window = df[col].iloc[-(2 * days):-days].sum()
+    last_window = df.iloc[-days:][col].sum()
+    prev_window = df.iloc[-(2 * days):-days][col].sum()
 
-    if prev_window == 0:
+    if prev_window <= 0:
         return 0
 
     return ((last_window - prev_window) / prev_window) * 100
 
+
 # ==================================================================================================
-# GROWTH KPIs (CORRECT WINDOW-BASED LOGIC)
+# KPI CALCULATIONS (6 METRICS)
 # ==================================================================================================
 
-# Volume Growth
+# Volume
 volume_7d = growth_from_window(full_df, "volume", 7)
 volume_30d = growth_from_window(full_df, "volume", 30)
-volume_6m = growth_from_window(full_df, "volume", 180)
+volume_180d = growth_from_window(full_df, "volume", 180)
 
-# Transaction Growth
+# Transactions
 tx_7d = growth_from_window(full_df, "num_txs", 7)
 tx_30d = growth_from_window(full_df, "num_txs", 30)
-tx_6m = growth_from_window(full_df, "num_txs", 180)
+tx_180d = growth_from_window(full_df, "num_txs", 180)
 
 
 # ==================================================================================================
-# DISPLAY KPIs (ONE ROW)
+# DISPLAY (ONE ROW - 6 KPIs)
 # ==================================================================================================
 
-st.markdown("## 📊 Volume & Transactions Growth (WoW / MoM / 6M)")
+st.markdown("## 📊 Growth KPIs (Volume & Transactions)")
 
 c1, c2, c3, c4, c5, c6 = st.columns(6)
 
 with c1:
-    st.metric("7D Volume Growth", f"{volume_7d:.2f}%")
+    st.metric("7D Volume", f"{volume_7d:.2f}%")
 
 with c2:
-    st.metric("30D Volume Growth", f"{volume_30d:.2f}%")
+    st.metric("30D Volume", f"{volume_30d:.2f}%")
 
 with c3:
-    st.metric("6M Volume Growth", f"{volume_6m:.2f}%")
+    st.metric("6M Volume", f"{volume_180d:.2f}%")
 
 with c4:
-    st.metric("7D Tx Growth", f"{tx_7d:.2f}%")
+    st.metric("7D Tx", f"{tx_7d:.2f}%")
 
 with c5:
-    st.metric("30D Tx Growth", f"{tx_30d:.2f}%")
+    st.metric("30D Tx", f"{tx_30d:.2f}%")
 
 with c6:
-    st.metric("6M Tx Growth", f"{tx_6m:.2f}%")
+    st.metric("6M Tx", f"{tx_180d:.2f}%")
