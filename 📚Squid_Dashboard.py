@@ -241,7 +241,7 @@ filtered_df = filtered_df.dropna(subset=["timestamp"])
 filtered_df = filtered_df.sort_values("timestamp")
 
 freq_map = {
-    "Month": "ME"و
+    "Month": "ME",
     "Week": "W",
     "Day": "D"
 }
