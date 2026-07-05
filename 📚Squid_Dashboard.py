@@ -262,6 +262,25 @@ with kpi3:
 
 st.divider()
 
+# NUMBER FORMATTER ===================================================================================
+
+def format_number(value, prefix=""):
+
+    if value >= 1_000_000_000:
+        return f"{prefix}{value/1_000_000_000:.2f}B"
+
+    elif value >= 1_000_000:
+        return f"{prefix}{value/1_000_000:.2f}M"
+
+    elif value >= 1_000:
+        return f"{prefix}{value/1_000:.2f}K"
+
+    else:
+        if isinstance(value, float):
+            return f"{prefix}{value:,.2f}"
+        else:
+            return f"{prefix}{value:,}"
+            
 # DAILY VOLUME & TX STATISTICS (FILTER DEPENDENT) ====================================================
 
 daily_df = filtered_df.copy()
@@ -283,37 +302,37 @@ k1, k2, k3, k4, k5, k6 = st.columns(6)
 with k1:
     st.metric(
         "Max Daily Volume",
-        f"${max_daily_volume:,.2f}"
+        format_number(max_daily_volume, "$")
     )
 
 with k2:
     st.metric(
         "Median Daily Volume",
-        f"${median_daily_volume:,.2f}"
+        format_number(median_daily_volume, "$")
     )
 
 with k3:
     st.metric(
         "Min Daily Volume",
-        f"${min_daily_volume:,.2f}"
+        format_number(min_daily_volume, "$")
     )
 
 with k4:
     st.metric(
         "Max Daily Txn",
-        f"{max_daily_tx:,}"
+        format_number(max_daily_tx)
     )
 
 with k5:
     st.metric(
         "Median Daily Txn",
-        f"{median_daily_tx:,}"
+        format_number(median_daily_tx)
     )
 
 with k6:
     st.metric(
         "Min Daily Txn",
-        f"{min_daily_tx:,}"
+        format_number(min_daily_tx)
     )
 # ==================================================================================================
 # FULL DATASET (CLEAN + SAFE PIPELINE)
