@@ -288,12 +288,12 @@ daily_df = filtered_df.copy()
 # Daily Volume
 max_daily_volume = daily_df["volume"].max()
 median_daily_volume = daily_df["volume"].median()
-min_daily_volume = daily_df["volume"].average()
+avg_daily_volume = daily_df["volume"].mean()
 
 # Daily Transactions
 max_daily_tx = int(daily_df["num_txs"].max())
 median_daily_tx = int(daily_df["num_txs"].median())
-min_daily_tx = int(daily_df["num_txs"].min())
+avg_daily_tx = int(daily_df["num_txs"].mean())
 
 st.markdown("## 📈 Daily Volume & Transaction Statistics")
 
@@ -313,8 +313,8 @@ with k2:
 
 with k3:
     st.metric(
-        "Min Daily Volume",
-        format_number(min_daily_volume, "$")
+        "Avg Daily Volume",
+        format_number(avg_daily_volume, "$")
     )
 
 with k4:
@@ -331,8 +331,8 @@ with k5:
 
 with k6:
     st.metric(
-        "Min Daily Txn",
-        format_number(min_daily_tx)
+        "Avg Daily Txn",
+        format_number(avg_daily_tx)
     )
 # ==================================================================================================
 # FULL DATASET (CLEAN + SAFE PIPELINE)
