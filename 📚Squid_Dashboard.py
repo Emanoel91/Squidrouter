@@ -254,7 +254,7 @@ elif timeframe == "Month":
     chart_df = (
         filtered_df
         .set_index("timestamp")
-        .resample("M")
+        .resample("ME")
         .sum()
         .reset_index()
     )
