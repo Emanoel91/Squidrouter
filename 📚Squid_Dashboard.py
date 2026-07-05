@@ -217,11 +217,10 @@ elif timeframe == "Week":
 elif timeframe == "Month":
     chart_df = (
         filtered_df.set_index("timestamp")
-        .resample("M")
+        .resample("ME")
         .sum()
         .reset_index()
     )
-
 
 # ==================================================================================================
 # BASE KPI CALCULATIONS (FILTERED - DEPENDS ON USER INPUT)
@@ -513,6 +512,13 @@ with left_col:
         secondary_y=True
     )
 
+    fig_volume.update_xaxes(
+    tickformat="%d %b %Y",
+    tickangle=-45,
+    nticks=10,
+    showgrid=False
+    )
+
     st.plotly_chart(
         fig_volume,
         use_container_width=True
@@ -573,6 +579,13 @@ with right_col:
     fig_tx.update_yaxes(
         title_text="Cumulative Transactions",
         secondary_y=True
+    )
+
+    fig_tx.update_xaxes(
+    tickformat="%d %b %Y",
+    tickangle=-45,
+    nticks=10,
+    showgrid=False
     )
 
     st.plotly_chart(
