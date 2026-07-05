@@ -241,9 +241,9 @@ filtered_df = filtered_df.dropna(subset=["timestamp"])
 filtered_df = filtered_df.sort_values("timestamp")
 
 freq_map = {
-    "Day": "D",
+    "Month": "ME"و
     "Week": "W",
-    "Month": "ME"   # مهم: pandas جدید
+    "Day": "D"
 }
 
 chart_df = (
