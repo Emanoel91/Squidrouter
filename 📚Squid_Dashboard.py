@@ -3,7 +3,6 @@ import requests
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
-
 from datetime import datetime, timedelta
 
 # ==========================================================================================
@@ -567,4 +566,75 @@ with c6:
         "6M Tx",
         f"{tx_6m:.2f}%"
     )
+
+# ==========================================================================================
+# TIME SERIES CHARTS (Volume + Transactions)
+# ==========================================================================================
+
+volume_color = "#c58ce2"
+tx_color = "#e1fb43"
+
+chart_df = chart_df.sort_values("timestamp")
+
+x = chart_df["timestamp"]
+
+# ==========================================================================================
+# CHART ROW
+# ==========================================================================================
+
+col1, col2 = st.columns(2)
+
+# --------------------------
+# VOLUME CHART
+# --------------------------
+with col1:
+
+    fig_volume = go.Figure()
+
+    fig_volume.add_trace(
+        go.Bar(
+            x=x,
+            y=chart_df["volume"],
+            name="Volume",
+            marker_color=volume_color
+        )
+    )
+
+    fig_volume.update_layout(
+        title="Volume Over Time",
+        xaxis_title="Time",
+        yaxis_title="Volume",
+        template="plotly_white",
+        height=400,
+        margin=dict(l=10, r=10, t=40, b=10)
+    )
+
+    st.plotly_chart(fig_volume, use_container_width=True)
+
+# --------------------------
+# TRANSACTIONS CHART
+# --------------------------
+with col2:
+
+    fig_tx = go.Figure()
+
+    fig_tx.add_trace(
+        go.Bar(
+            x=x,
+            y=chart_df["num_txs"],
+            name="Transactions",
+            marker_color=tx_color
+        )
+    )
+
+    fig_tx.update_layout(
+        title="Transactions Over Time",
+        xaxis_title="Time",
+        yaxis_title="Transactions",
+        template="plotly_white",
+        height=400,
+        margin=dict(l=10, r=10, t=40, b=10)
+    )
+
+    st.plotly_chart(fig_tx, use_container_width=True)
 
