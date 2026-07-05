@@ -288,7 +288,7 @@ daily_df = filtered_df.copy()
 # Daily Volume
 max_daily_volume = daily_df["volume"].max()
 median_daily_volume = daily_df["volume"].median()
-min_daily_volume = daily_df["volume"].avg()
+min_daily_volume = daily_df["volume"].average()
 
 # Daily Transactions
 max_daily_tx = int(daily_df["num_txs"].max())
