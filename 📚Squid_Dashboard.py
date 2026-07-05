@@ -315,18 +315,15 @@ full_df = (
     .sort_values("timestamp")
     .reset_index(drop=True)
 )
+full_df = full_df.set_index("timestamp").sort_index()
 
+full_df = full_df.resample("D").sum().fillna(0).reset_index()
 
 # ==================================================================================================
 # GROWTH FUNCTION (BASED ON LAST OBSERVATION)
 # ==================================================================================================
 
 def growth_from_window(df, col, days):
-    """
-    Compare:
-    - last N days sum
-    - previous N days sum
-    """
 
     if len(df) < days * 2:
         return 0
@@ -338,8 +335,9 @@ def growth_from_window(df, col, days):
         return 0
 
     return ((last_window - prev_window) / prev_window) * 100
+
+full_df = full_df.sort_values("timestamp").reset_index(drop=True)
     
-full_df = full_df.set_index("timestamp").asfreq("D", fill_value=0).reset_index()
 
 volume_7d = growth_from_window(full_df, "volume", 7)
 volume_30d = growth_from_window(full_df, "volume", 30)
