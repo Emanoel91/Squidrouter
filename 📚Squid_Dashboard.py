@@ -260,7 +260,6 @@ with kpi3:
         value=f"${avg_volume_per_txn:,.2f}"
     )
 
-st.divider()
 
 # NUMBER FORMATTER ===================================================================================
 
@@ -294,8 +293,6 @@ avg_daily_volume = daily_df["volume"].mean()
 max_daily_tx = int(daily_df["num_txs"].max())
 median_daily_tx = int(daily_df["num_txs"].median())
 avg_daily_tx = int(daily_df["num_txs"].mean())
-
-st.markdown("## 📈 Daily Volume & Transaction Statistics")
 
 k1, k2, k3, k4, k5, k6 = st.columns(6)
 
@@ -334,6 +331,8 @@ with k6:
         "Avg Daily Txn",
         format_number(avg_daily_tx)
     )
+
+st.divider()
 # ==================================================================================================
 # FULL DATASET (CLEAN + SAFE PIPELINE)
 # ==================================================================================================
