@@ -571,11 +571,16 @@ with c6:
 # TIME SERIES CHARTS (Volume + Transactions)
 # ==========================================================================================
 
+import plotly.graph_objects as go
+
+# رنگ‌ها
 volume_color = "#c58ce2"
 tx_color = "#e1fb43"
 
+# اطمینان از ترتیب زمانی
 chart_df = chart_df.sort_values("timestamp")
 
+# ستون‌های چارت
 x = chart_df["timestamp"]
 
 # ==========================================================================================
@@ -637,4 +642,3 @@ with col2:
     )
 
     st.plotly_chart(fig_tx, use_container_width=True)
-
