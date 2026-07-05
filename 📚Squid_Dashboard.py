@@ -104,7 +104,7 @@ with c2:
 with c3:
     timeframe = st.selectbox(
         "Time Frame",
-        ["Month", "Week", "Day"]
+        ["Day", "Week", "Month"]
     )
 
 st.divider()
