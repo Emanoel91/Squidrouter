@@ -85,8 +85,6 @@ st.info("⏳ Data is fetched from AxelarScan APIs and may take a few seconds.")
 # FILTERS
 # ==========================================================================================
 
-st.markdown("## Filters")
-
 today = datetime.utcnow().date()
 
 c1, c2, c3 = st.columns([1.3, 1.3, 0.8])
