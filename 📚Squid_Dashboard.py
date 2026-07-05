@@ -1,6 +1,8 @@
 import streamlit as st
 import requests
 import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 
 # PAGE CONFIG ========================================================================================
@@ -437,3 +439,143 @@ with c5:
 
 with c6:
     st.metric("6M Tx", f"{tx_6m:.2f}%")
+
+# ==================================================================================================
+# CUMULATIVE METRICS
+# ==================================================================================================
+
+plot_df = chart_df.copy()
+
+plot_df["cum_volume"] = plot_df["volume"].cumsum()
+plot_df["cum_tx"] = plot_df["num_txs"].cumsum()
+
+
+# ==================================================================================================
+# CHARTS
+# ==================================================================================================
+
+left_col, right_col = st.columns(2)
+
+
+# ==========================================================================================
+# LEFT CHART : VOLUME
+# ==========================================================================================
+
+with left_col:
+
+    fig_volume = make_subplots(specs=[[{"secondary_y": True}]])
+
+    # Bar
+    fig_volume.add_trace(
+        go.Bar(
+            x=plot_df["timestamp"],
+            y=plot_df["volume"],
+            name="Volume",
+            marker_color="#e1fb43"
+        ),
+        secondary_y=False
+    )
+
+    # Line
+    fig_volume.add_trace(
+        go.Scatter(
+            x=plot_df["timestamp"],
+            y=plot_df["cum_volume"],
+            name="Cumulative Volume",
+            mode="lines",
+            line=dict(
+                color="#c58ce2",
+                width=3
+            )
+        ),
+        secondary_y=True
+    )
+
+    fig_volume.update_layout(
+        title="Cross-chain Volume",
+        height=500,
+        hovermode="x unified",
+        legend=dict(
+            orientation="h",
+            y=1.08,
+            x=0
+        ),
+        margin=dict(l=20, r=20, t=60, b=20)
+    )
+
+    fig_volume.update_yaxes(
+        title_text="Daily Volume",
+        secondary_y=False
+    )
+
+    fig_volume.update_yaxes(
+        title_text="Cumulative Volume",
+        secondary_y=True
+    )
+
+    st.plotly_chart(
+        fig_volume,
+        use_container_width=True
+    )
+
+
+# ==========================================================================================
+# RIGHT CHART : TRANSACTIONS
+# ==========================================================================================
+
+with right_col:
+
+    fig_tx = make_subplots(specs=[[{"secondary_y": True}]])
+
+    # Bar
+    fig_tx.add_trace(
+        go.Bar(
+            x=plot_df["timestamp"],
+            y=plot_df["num_txs"],
+            name="Transactions",
+            marker_color="#e1fb43"
+        ),
+        secondary_y=False
+    )
+
+    # Line
+    fig_tx.add_trace(
+        go.Scatter(
+            x=plot_df["timestamp"],
+            y=plot_df["cum_tx"],
+            name="Cumulative Transactions",
+            mode="lines",
+            line=dict(
+                color="#c58ce2",
+                width=3
+            )
+        ),
+        secondary_y=True
+    )
+
+    fig_tx.update_layout(
+        title="Cross-chain Transactions",
+        height=500,
+        hovermode="x unified",
+        legend=dict(
+            orientation="h",
+            y=1.08,
+            x=0
+        ),
+        margin=dict(l=20, r=20, t=60, b=20)
+    )
+
+    fig_tx.update_yaxes(
+        title_text="Daily Transactions",
+        secondary_y=False
+    )
+
+    fig_tx.update_yaxes(
+        title_text="Cumulative Transactions",
+        secondary_y=True
+    )
+
+    st.plotly_chart(
+        fig_tx,
+        use_container_width=True
+    )
