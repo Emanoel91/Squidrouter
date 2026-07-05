@@ -1,16 +1,9 @@
-# ==================================================================================================
-# IMPORTS
-# ==================================================================================================
-
 import streamlit as st
 import requests
 import pandas as pd
 from datetime import datetime, timedelta
 
-
-# ==================================================================================================
-# PAGE CONFIG
-# ==================================================================================================
+# PAGE CONFIG ========================================================================================
 
 st.set_page_config(
     page_title="SquidRouter On-Chain Analytics",
@@ -19,9 +12,7 @@ st.set_page_config(
 )
 
 
-# ==================================================================================================
-# CUSTOM CSS (KPI styling)
-# ==================================================================================================
+# CUSTOM CSS (KPI styling) ===========================================================================
 
 st.markdown(
     """
@@ -42,10 +33,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
-# ==================================================================================================
-# HEADER
-# ==================================================================================================
+# HEADER =============================================================================================
 
 st.markdown(
     """
@@ -58,10 +46,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
-# ==================================================================================================
-# BUILDER INFO
-# ==================================================================================================
+# BUILDER INFO =======================================================================================
 
 st.markdown(
     """
@@ -80,17 +65,12 @@ st.markdown(
 )
 
 
-# ==================================================================================================
-# INFO BOXES
-# ==================================================================================================
+# INFO BOXES =========================================================================================
 
 st.info("📊 On-chain analytics dashboard for SquidRouter cross-chain activity.")
 st.info("⏳ Data is fetched from AxelarScan APIs and may take a few seconds.")
 
-
-# ==================================================================================================
-# FILTERS (TOP OF PAGE)
-# ==================================================================================================
+# FILTERS (TOP OF PAGE) ==============================================================================
 
 st.markdown("## Filters")
 
@@ -282,6 +262,59 @@ with kpi3:
 
 st.divider()
 
+# DAILY VOLUME & TX STATISTICS (FILTER DEPENDENT) ====================================================
+
+daily_df = filtered_df.copy()
+
+# Daily Volume
+max_daily_volume = daily_df["volume"].max()
+median_daily_volume = daily_df["volume"].median()
+min_daily_volume = daily_df["volume"].min()
+
+# Daily Transactions
+max_daily_tx = int(daily_df["num_txs"].max())
+median_daily_tx = int(daily_df["num_txs"].median())
+min_daily_tx = int(daily_df["num_txs"].min())
+
+st.markdown("## 📈 Daily Volume & Transaction Statistics")
+
+k1, k2, k3, k4, k5, k6 = st.columns(6)
+
+with k1:
+    st.metric(
+        "Max Daily Volume",
+        f"${max_daily_volume:,.2f}"
+    )
+
+with k2:
+    st.metric(
+        "Median Daily Volume",
+        f"${median_daily_volume:,.2f}"
+    )
+
+with k3:
+    st.metric(
+        "Min Daily Volume",
+        f"${min_daily_volume:,.2f}"
+    )
+
+with k4:
+    st.metric(
+        "Max Daily Txn",
+        f"{max_daily_tx:,}"
+    )
+
+with k5:
+    st.metric(
+        "Median Daily Txn",
+        f"{median_daily_tx:,}"
+    )
+
+with k6:
+    st.metric(
+        "Min Daily Txn",
+        f"{min_daily_tx:,}"
+    )
 # ==================================================================================================
 # FULL DATASET (CLEAN + SAFE PIPELINE)
 # ==================================================================================================
