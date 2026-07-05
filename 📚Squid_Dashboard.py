@@ -231,32 +231,33 @@ filtered_df = (
 )
 
 # ==========================================================================================
-# TIMEFRAME TRANSFORMATION
+# TIMEFRAME TRANSFORMATION (OPTIMIZED)
 # ==========================================================================================
 
-if timeframe == "Day":
+filtered_df = filtered_df.copy()
+filtered_df["timestamp"] = pd.to_datetime(filtered_df["timestamp"], errors="coerce")
+filtered_df = filtered_df.dropna(subset=["timestamp"])
 
-    chart_df = filtered_df.copy()
+filtered_df = filtered_df.sort_values("timestamp")
 
-elif timeframe == "Week":
+freq_map = {
+    "Day": "D",
+    "Week": "W",
+    "Month": "ME"   # مهم: pandas جدید
+}
 
-    chart_df = (
-        filtered_df
-        .set_index("timestamp")
-        .resample("W")
-        .sum()
-        .reset_index()
-    )
+chart_df = (
+    filtered_df
+    .set_index("timestamp")
+    .resample(freq_map[timeframe])
+    .agg({
+        "volume": "sum",
+        "num_txs": "sum"
+    })
+    .reset_index()
+)
 
-elif timeframe == "Month":
-
-    chart_df = (
-        filtered_df
-        .set_index("timestamp")
-        .resample("ME")
-        .sum()
-        .reset_index()
-    )
+chart_df = chart_df.dropna()
 
 # ==========================================================================================
 # BASE KPI CALCULATIONS
@@ -566,3 +567,67 @@ with c6:
         "6M Tx",
         f"{tx_6m:.2f}%"
     )
+
+import plotly.graph_objects as go
+
+volume_color = "#c58ce2"
+tx_color = "#e1fb43"
+
+chart_df = chart_df.sort_values("timestamp")
+
+x = chart_df["timestamp"]
+
+col1, col2 = st.columns(2)
+
+# ==========================================================================================
+# VOLUME CHART
+# ==========================================================================================
+with col1:
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Bar(
+            x=x,
+            y=chart_df["volume"],
+            marker_color=volume_color
+        )
+    )
+
+    fig.update_layout(
+        title="Volume Over Time",
+        template="plotly_white",
+        height=380,
+        margin=dict(l=10, r=10, t=40, b=10),
+        xaxis=dict(rangeslider=dict(visible=False)),
+        yaxis=dict(fixedrange=True)
+    )
+
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+
+# ==========================================================================================
+# TRANSACTIONS CHART
+# ==========================================================================================
+with col2:
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Bar(
+            x=x,
+            y=chart_df["num_txs"],
+            marker_color=tx_color
+        )
+    )
+
+    fig.update_layout(
+        title="Transactions Over Time",
+        template="plotly_white",
+        height=380,
+        margin=dict(l=10, r=10, t=40, b=10),
+        xaxis=dict(rangeslider=dict(visible=False)),
+        yaxis=dict(fixedrange=True)
+    )
+
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
