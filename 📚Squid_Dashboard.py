@@ -283,8 +283,11 @@ with kpi3:
 st.divider()
 
 # ==================================================================================================
-# FULL DATASET (FIXED TIMESTAMP + CLEAN DAILY AGGREGATION)
+# FULL DATASET (ROBUST + SAFE TIMESTAMP HANDLING)
 # ==================================================================================================
+
+from datetime import datetime
+import pandas as pd
 
 full_start = datetime(2024, 1, 1).date()
 full_end = datetime.utcnow().date()
@@ -292,20 +295,39 @@ full_end = datetime.utcnow().date()
 full_df = load_data(full_start, full_end)
 
 if full_df.empty:
-    st.warning("No full dataset available for growth metrics.")
+    st.warning("No data available for growth metrics.")
     st.stop()
 
-# ==================================================================================================
-# 🔥 IMPORTANT FIX: timestamp is in MILLISECONDS
-# ==================================================================================================
-
-full_df["timestamp"] = pd.to_datetime(full_df["timestamp"], unit="ms")
 
 # ==================================================================================================
-# convert to daily granularity (correct method)
+# SAFE TIMESTAMP FIX (handles ms + seconds + bad values)
 # ==================================================================================================
 
-full_df["date"] = full_df["timestamp"].dt.date
+def parse_timestamp(x):
+    try:
+        x = int(x)
+
+        # detect milliseconds vs seconds
+        if x > 10**12:
+            return pd.to_datetime(x, unit="ms", errors="coerce")
+        else:
+            return pd.to_datetime(x, unit="s", errors="coerce")
+
+    except:
+        return pd.NaT
+
+
+full_df["timestamp"] = full_df["timestamp"].apply(parse_timestamp)
+
+# remove invalid timestamps
+full_df = full_df.dropna(subset=["timestamp"])
+
+
+# ==================================================================================================
+# DAILY AGGREGATION (REAL CALENDAR DAYS)
+# ==================================================================================================
+
+full_df["date"] = full_df["timestamp"].dt.floor("D")
 
 full_df = (
     full_df.groupby("date", as_index=False)
@@ -321,13 +343,8 @@ full_df = (
     .reset_index(drop=True)
 )
 
-# convert back to datetime for slicing safety
-full_df["date"] = pd.to_datetime(full_df["date"])
-
-full_df = full_df.sort_values("date").reset_index(drop=True)
-
 # ==================================================================================================
-# GROWTH FUNCTION (WINDOW BASED - CORRECT)
+# WINDOW GROWTH FUNCTION (CORRECT VERSION)
 # ==================================================================================================
 
 def growth_from_window(df, col, days):
@@ -345,7 +362,7 @@ def growth_from_window(df, col, days):
 
 
 # ==================================================================================================
-# KPI CALCULATIONS
+# KPI CALCULATIONS (6 METRICS)
 # ==================================================================================================
 
 # Volume
@@ -360,7 +377,7 @@ tx_180d = growth_from_window(full_df, "num_txs", 180)
 
 
 # ==================================================================================================
-# UI DISPLAY (ONE ROW)
+# DISPLAY (ONE ROW - 6 KPIs)
 # ==================================================================================================
 
 st.markdown("## 📊 Growth KPIs (Volume & Transactions)")
