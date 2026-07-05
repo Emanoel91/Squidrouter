@@ -283,7 +283,7 @@ with kpi3:
 st.divider()
 
 # ==================================================================================================
-# FULL DATASET (ROBUST + SAFE TIMESTAMP HANDLING)
+# FULL DATASET (CLEAN + SAFE PIPELINE)
 # ==================================================================================================
 
 from datetime import datetime
@@ -295,36 +295,24 @@ full_end = datetime.utcnow().date()
 full_df = load_data(full_start, full_end)
 
 if full_df.empty:
-    st.warning("No data available for growth metrics.")
+    st.warning("No data available for KPIs")
     st.stop()
 
 
 # ==================================================================================================
-# SAFE TIMESTAMP FIX (handles ms + seconds + bad values)
+# FIX 1: CLEAN TIMESTAMP (API = milliseconds)
 # ==================================================================================================
 
-def parse_timestamp(x):
-    try:
-        x = int(x)
+full_df["timestamp"] = pd.to_numeric(full_df["timestamp"], errors="coerce")
+full_df = full_df.dropna(subset=["timestamp"])
+full_df["timestamp"] = full_df["timestamp"].astype("int64")
 
-        # detect milliseconds vs seconds
-        if x > 10**12:
-            return pd.to_datetime(x, unit="ms", errors="coerce")
-        else:
-            return pd.to_datetime(x, unit="s", errors="coerce")
-
-    except:
-        return pd.NaT
-
-
-full_df["timestamp"] = full_df["timestamp"].apply(parse_timestamp)
-
-# remove invalid timestamps
+full_df["timestamp"] = pd.to_datetime(full_df["timestamp"], unit="ms", errors="coerce")
 full_df = full_df.dropna(subset=["timestamp"])
 
 
 # ==================================================================================================
-# DAILY AGGREGATION (REAL CALENDAR DAYS)
+# FIX 2: DAILY AGGREGATION
 # ==================================================================================================
 
 full_df["date"] = full_df["timestamp"].dt.floor("D")
@@ -342,9 +330,8 @@ full_df = (
     .sort_values("date")
     .reset_index(drop=True)
 )
-
 # ==================================================================================================
-# WINDOW GROWTH FUNCTION (CORRECT VERSION)
+# WINDOW GROWTH FUNCTION (CORRECT & SAFE)
 # ==================================================================================================
 
 def growth_from_window(df, col, days):
@@ -362,25 +349,25 @@ def growth_from_window(df, col, days):
 
 
 # ==================================================================================================
-# KPI CALCULATIONS (6 METRICS)
+# KPI CALCULATIONS
 # ==================================================================================================
 
-# Volume
+# Volume KPIs
 volume_7d = growth_from_window(full_df, "volume", 7)
 volume_30d = growth_from_window(full_df, "volume", 30)
-volume_180d = growth_from_window(full_df, "volume", 180)
+volume_6m = growth_from_window(full_df, "volume", 180)
 
-# Transactions
+# Transaction KPIs
 tx_7d = growth_from_window(full_df, "num_txs", 7)
 tx_30d = growth_from_window(full_df, "num_txs", 30)
-tx_180d = growth_from_window(full_df, "num_txs", 180)
+tx_6m = growth_from_window(full_df, "num_txs", 180)
 
 
 # ==================================================================================================
-# DISPLAY (ONE ROW - 6 KPIs)
+# UI (ONE ROW - 6 KPIs)
 # ==================================================================================================
 
-st.markdown("## 📊 Growth KPIs (Volume & Transactions)")
+st.markdown("## 📊 Growth KPIs")
 
 c1, c2, c3, c4, c5, c6 = st.columns(6)
 
@@ -391,7 +378,7 @@ with c2:
     st.metric("30D Volume", f"{volume_30d:.2f}%")
 
 with c3:
-    st.metric("6M Volume", f"{volume_180d:.2f}%")
+    st.metric("6M Volume", f"{volume_6m:.2f}%")
 
 with c4:
     st.metric("7D Tx", f"{tx_7d:.2f}%")
@@ -400,4 +387,4 @@ with c5:
     st.metric("30D Tx", f"{tx_30d:.2f}%")
 
 with c6:
-    st.metric("6M Tx", f"{tx_180d:.2f}%")
+    st.metric("6M Tx", f"{tx_6m:.2f}%")
