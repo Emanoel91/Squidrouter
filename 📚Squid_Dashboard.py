@@ -418,8 +418,6 @@ tx_6m = growth_from_window(full_df, "num_txs", 180)
 # UI (ONE ROW - 6 KPIs)
 # ==================================================================================================
 
-st.markdown("## 📊 Growth KPIs")
-
 c1, c2, c3, c4, c5, c6 = st.columns(6)
 
 with c1:
