@@ -321,36 +321,33 @@ full_df = (
 # GROWTH FUNCTION (BASED ON LAST OBSERVATION)
 # ==================================================================================================
 
-def growth_from_last(df, col, days):
+def growth_from_window(df, col, days):
+    """
+    Compare:
+    - last N days sum
+    - previous N days sum
+    """
 
-    if len(df) < days + 1:
+    if len(df) < days * 2:
         return 0
 
-    latest = df[col].iloc[-1]
-    past = df[col].iloc[-(days + 1)]
+    last_window = df[col].iloc[-days:].sum()
+    prev_window = df[col].iloc[-(2*days):-days].sum()
 
-    if past == 0:
+    if prev_window == 0:
         return 0
 
-    return ((latest - past) / past) * 100
+    return ((last_window - prev_window) / prev_window) * 100
+    
+full_df = full_df.set_index("timestamp").asfreq("D", fill_value=0).reset_index()
 
+volume_7d = growth_from_window(full_df, "volume", 7)
+volume_30d = growth_from_window(full_df, "volume", 30)
+volume_6m = growth_from_window(full_df, "volume", 180)
 
-# ==================================================================================================
-# GROWTH KPIs — VOLUME (INDEPENDENT)
-# ==================================================================================================
-
-volume_7d = growth_from_last(full_df, "volume", 7)
-volume_30d = growth_from_last(full_df, "volume", 30)
-volume_6m = growth_from_last(full_df, "volume", 180)
-
-
-# ==================================================================================================
-# GROWTH KPIs — TRANSACTIONS (INDEPENDENT)
-# ==================================================================================================
-
-tx_7d = growth_from_last(full_df, "num_txs", 7)
-tx_30d = growth_from_last(full_df, "num_txs", 30)
-tx_6m = growth_from_last(full_df, "num_txs", 180)
+tx_7d = growth_from_window(full_df, "num_txs", 7)
+tx_30d = growth_from_window(full_df, "num_txs", 30)
+tx_6m = growth_from_window(full_df, "num_txs", 180)
 
 
 # ==================================================================================================
