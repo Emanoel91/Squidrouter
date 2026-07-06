@@ -344,3 +344,148 @@ with col2:
     fig.update_xaxes(range=[pd.Timestamp(start_date), pd.Timestamp(end_date)])
     fig.update_yaxes(gridcolor="rgba(0,0,0,0.08)", zeroline=False)
     st.plotly_chart(fig, use_container_width=True)
+
+# ================ CUMULATIVE & AVG CHARTS ================
+
+cum_df = chart_df.copy()
+
+cum_df["cumulative_volume"] = cum_df["volume"].cumsum()
+cum_df["cumulative_txs"] = cum_df["num_txs"].cumsum()
+cum_df["avg_volume_per_tx"] = (
+    cum_df["volume"] / cum_df["num_txs"]
+).replace([float("inf"), -float("inf")], 0).fillna(0)
+
+col1, col2, col3 = st.columns(3)
+
+# ================= Cumulative Volume =================
+
+with col1:
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=cum_df["timestamp"],
+            y=cum_df["cumulative_volume"],
+            mode="lines",
+            line=dict(color="#c58ce2", width=3),
+            fill="tozeroy",
+            fillcolor="rgba(197,140,226,0.25)",
+            hovertemplate=
+            "<b>%{x|%Y-%m-%d}</b><br>"
+            "Cumulative Volume: <b>$%{y:,.2f}</b>"
+            "<extra></extra>"
+        )
+    )
+
+    fig.update_layout(
+        title="Cumulative Volume",
+        template="plotly_white",
+        height=420,
+        showlegend=False,
+        hovermode="x unified",
+        margin=dict(l=10, r=10, t=50, b=10),
+        xaxis_title="",
+        yaxis_title="Volume ($)"
+    )
+
+    fig.update_xaxes(
+        showgrid=False,
+        zeroline=False,
+        range=[pd.Timestamp(start_date), pd.Timestamp(end_date)]
+    )
+
+    fig.update_yaxes(
+        gridcolor="rgba(0,0,0,0.08)",
+        zeroline=False
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+# ================= Cumulative Transactions =================
+
+with col2:
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=cum_df["timestamp"],
+            y=cum_df["cumulative_txs"],
+            mode="lines",
+            line=dict(color="#c58ce2", width=3),
+            fill="tozeroy",
+            fillcolor="rgba(197,140,226,0.25)",
+            hovertemplate=
+            "<b>%{x|%Y-%m-%d}</b><br>"
+            "Cumulative Transactions: <b>%{y:,}</b>"
+            "<extra></extra>"
+        )
+    )
+
+    fig.update_layout(
+        title="Cumulative Transactions",
+        template="plotly_white",
+        height=420,
+        showlegend=False,
+        hovermode="x unified",
+        margin=dict(l=10, r=10, t=50, b=10),
+        xaxis_title="",
+        yaxis_title="Transactions"
+    )
+
+    fig.update_xaxes(
+        showgrid=False,
+        zeroline=False,
+        range=[pd.Timestamp(start_date), pd.Timestamp(end_date)]
+    )
+
+    fig.update_yaxes(
+        gridcolor="rgba(0,0,0,0.08)",
+        zeroline=False
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+# ================= Average Volume per Transaction =================
+
+with col3:
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=cum_df["timestamp"],
+            y=cum_df["avg_volume_per_tx"],
+            mode="lines",
+            line=dict(color="#c58ce2", width=3),
+            hovertemplate=
+            "<b>%{x|%Y-%m-%d}</b><br>"
+            "Avg Volume / Tx: <b>$%{y:,.2f}</b>"
+            "<extra></extra>"
+        )
+    )
+
+    fig.update_layout(
+        title="Average Volume per Transaction",
+        template="plotly_white",
+        height=420,
+        showlegend=False,
+        hovermode="x unified",
+        margin=dict(l=10, r=10, t=50, b=10),
+        xaxis_title="",
+        yaxis_title="USD"
+    )
+
+    fig.update_xaxes(
+        showgrid=False,
+        zeroline=False,
+        range=[pd.Timestamp(start_date), pd.Timestamp(end_date)]
+    )
+
+    fig.update_yaxes(
+        gridcolor="rgba(0,0,0,0.08)",
+        zeroline=False
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
