@@ -379,7 +379,7 @@ with col1:
     )
 
     fig.update_layout(
-        title="Cumulative Volume",
+        title="Cumulative Volume Over Time",
         template="plotly_white",
         height=420,
         showlegend=False,
@@ -424,7 +424,7 @@ with col2:
     )
 
     fig.update_layout(
-        title="Cumulative Transactions",
+        title="Cumulative Transactions Over Time",
         template="plotly_white",
         height=420,
         showlegend=False,
@@ -467,7 +467,7 @@ with col3:
     )
 
     fig.update_layout(
-        title="Average Volume per Transaction",
+        title="Average Volume per Transaction Over Time",
         template="plotly_white",
         height=420,
         showlegend=False,
