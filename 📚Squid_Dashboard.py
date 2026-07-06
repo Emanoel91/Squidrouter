@@ -572,48 +572,59 @@ with c6:
 # VOLUME & TRANSACTIONS OVER TIME
 # ==========================================================================================
 
-left, right = st.columns(2)
+col1, col2 = st.columns(2)
 
-# ------------------------------------------------------------------------------
-# Volume Chart
-# ------------------------------------------------------------------------------
+# ==========================================================================================
+# CROSS-CHAIN VOLUME
+# ==========================================================================================
 
-with left:
+with col1:
 
     fig = go.Figure()
 
     fig.add_trace(
-        go.Scatter(
+        go.Bar(
             x=chart_df["timestamp"],
             y=chart_df["volume"],
-            mode="lines",
-            name="Volume",
-            line=dict(
+            marker=dict(
                 color="#c58ce2",
-                width=3
+                line=dict(
+                    color="#c58ce2",
+                    width=0
+                )
             ),
-            fill="tozeroy",
-            fillcolor="rgba(197,140,226,0.18)"
+            hovertemplate=
+            "<b>%{x|%Y-%m-%d}</b><br>"
+            "Volume: <b>$%{y:,.2f}</b>"
+            "<extra></extra>"
         )
     )
 
     fig.update_layout(
         title="Cross-chain Volume Over Time",
-        height=430,
         template="plotly_white",
+        height=430,
+        bargap=0.15,
+        showlegend=False,
         hovermode="x unified",
-        margin=dict(l=10, r=10, t=45, b=10),
+        margin=dict(
+            l=10,
+            r=10,
+            t=50,
+            b=10
+        ),
         xaxis_title="",
-        yaxis_title="Volume ($)",
-        showlegend=False
+        yaxis_title="Volume ($)"
     )
 
     fig.update_xaxes(
-        showgrid=False
+        showgrid=False,
+        zeroline=False
     )
 
     fig.update_yaxes(
-        gridcolor="rgba(0,0,0,0.08)"
+        gridcolor="rgba(0,0,0,0.08)",
+        zeroline=False
     )
 
     st.plotly_chart(
@@ -621,49 +632,60 @@ with left:
         use_container_width=True
     )
 
-# ------------------------------------------------------------------------------
-# Transactions Chart
-# ------------------------------------------------------------------------------
+# ==========================================================================================
+# CROSS-CHAIN TRANSACTIONS
+# ==========================================================================================
 
-with right:
+with col2:
 
     fig = go.Figure()
 
     fig.add_trace(
-        go.Scatter(
+        go.Bar(
             x=chart_df["timestamp"],
             y=chart_df["num_txs"],
-            mode="bar",
-            name="Transactions",
-            line=dict(
+            marker=dict(
                 color="#e1fb43",
-                width=3
+                line=dict(
+                    color="#e1fb43",
+                    width=0
+                )
             ),
-            fill="tozeroy",
-            fillcolor="rgba(225,251,67,0.20)"
+            hovertemplate=
+            "<b>%{x|%Y-%m-%d}</b><br>"
+            "Transactions: <b>%{y:,}</b>"
+            "<extra></extra>"
         )
     )
 
     fig.update_layout(
         title="Cross-chain Transactions Over Time",
-        height=430,
         template="plotly_white",
+        height=430,
+        bargap=0.15,
+        showlegend=False,
         hovermode="x unified",
-        margin=dict(l=10, r=10, t=45, b=10),
+        margin=dict(
+            l=10,
+            r=10,
+            t=50,
+            b=10
+        ),
         xaxis_title="",
-        yaxis_title="Transactions",
-        showlegend=False
+        yaxis_title="Transactions"
     )
 
     fig.update_xaxes(
-        showgrid=False
+        showgrid=False,
+        zeroline=False
     )
 
     fig.update_yaxes(
-        gridcolor="rgba(0,0,0,0.08)"
+        gridcolor="rgba(0,0,0,0.08)",
+        zeroline=False
     )
 
     st.plotly_chart(
         fig,
         use_container_width=True
-    ) 
+    )
