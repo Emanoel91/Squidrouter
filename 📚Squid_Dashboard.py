@@ -617,9 +617,16 @@ with col1:
         yaxis_title="Volume ($)"
     )
 
+#    fig.update_xaxes(
+#        showgrid=False,
+#        zeroline=False
+#    )
+
     fig.update_xaxes(
-        showgrid=False,
-        zeroline=False
+    range=[
+        pd.Timestamp(start_date),
+        pd.Timestamp(end_date)
+    ]
     )
 
     fig.update_yaxes(
@@ -675,9 +682,16 @@ with col2:
         yaxis_title="Transactions"
     )
 
+#    fig.update_xaxes(
+#        showgrid=False,
+#        zeroline=False
+#    )
+
     fig.update_xaxes(
-        showgrid=False,
-        zeroline=False
+    range=[
+        pd.Timestamp(start_date),
+        pd.Timestamp(end_date)
+    ]
     )
 
     fig.update_yaxes(
