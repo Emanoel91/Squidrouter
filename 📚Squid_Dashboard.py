@@ -617,10 +617,10 @@ with col1:
         yaxis_title="Volume ($)"
     )
 
-#    fig.update_xaxes(
-#        showgrid=False,
-#        zeroline=False
-#    )
+    fig.update_xaxes(
+        showgrid=False,
+        zeroline=False
+    )
 
     fig.update_xaxes(
     range=[
@@ -682,10 +682,10 @@ with col2:
         yaxis_title="Transactions"
     )
 
-#    fig.update_xaxes(
-#        showgrid=False,
-#        zeroline=False
-#    )
+    fig.update_xaxes(
+        showgrid=False,
+        zeroline=False
+    )
 
     fig.update_xaxes(
     range=[
