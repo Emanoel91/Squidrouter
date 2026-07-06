@@ -191,7 +191,7 @@ def load_data(start_date, end_date):
 
     df["timestamp"] = pd.to_datetime(
         df["timestamp"],
-        unit="s"
+        unit="ms"
     )
 
     return df
