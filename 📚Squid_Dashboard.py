@@ -633,7 +633,7 @@ with right:
         go.Scatter(
             x=chart_df["timestamp"],
             y=chart_df["num_txs"],
-            mode="lines",
+            mode="bar",
             name="Transactions",
             line=dict(
                 color="#e1fb43",
