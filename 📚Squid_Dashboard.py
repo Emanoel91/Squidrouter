@@ -489,3 +489,121 @@ with col3:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+# ================ MONTH x WEEKDAY HEATMAPS ================
+
+heat_df = filtered_df.copy()
+
+heat_df["month"] = heat_df["timestamp"].dt.month_name().str[:3]
+heat_df["weekday"] = heat_df["timestamp"].dt.day_name()
+
+month_order = [
+    "Jan","Feb","Mar","Apr","May","Jun",
+    "Jul","Aug","Sep","Oct","Nov","Dec"
+]
+
+weekday_order = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
+]
+
+# ---------- Volume Heatmap ----------
+
+volume_matrix = (
+    heat_df
+    .groupby(["weekday", "month"])["volume"]
+    .sum()
+    .unstack(fill_value=0)
+    .reindex(index=weekday_order, columns=month_order)
+)
+
+# ---------- Transaction Heatmap ----------
+
+tx_matrix = (
+    heat_df
+    .groupby(["weekday", "month"])["num_txs"]
+    .sum()
+    .unstack(fill_value=0)
+    .reindex(index=weekday_order, columns=month_order)
+)
+
+col1, col2 = st.columns(2)
+
+# ================= Volume Heatmap =================
+
+with col1:
+
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=volume_matrix.values,
+            x=month_order,
+            y=weekday_order,
+            colorscale=[
+                [0.00, "#ffffff"],
+                [0.20, "#efe1f7"],
+                [0.40, "#dfc0ef"],
+                [0.60, "#cf9fe7"],
+                [0.80, "#c58ce2"],
+                [1.00, "#8c42b8"]
+            ],
+            hovertemplate=
+            "<b>%{y}</b><br>"
+            "Month: %{x}<br>"
+            "Volume: <b>$%{z:,.2f}</b>"
+            "<extra></extra>",
+            colorbar=dict(title="Volume ($)")
+        )
+    )
+
+    fig.update_layout(
+        title="Cross-chain Volume Heatmap",
+        template="plotly_white",
+        height=430,
+        margin=dict(l=10, r=10, t=50, b=10),
+        xaxis_title="Month",
+        yaxis_title=""
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+# ================= Transactions Heatmap =================
+
+with col2:
+
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=tx_matrix.values,
+            x=month_order,
+            y=weekday_order,
+            colorscale=[
+                [0.00, "#ffffff"],
+                [0.20, "#efe1f7"],
+                [0.40, "#dfc0ef"],
+                [0.60, "#cf9fe7"],
+                [0.80, "#c58ce2"],
+                [1.00, "#8c42b8"]
+            ],
+            hovertemplate=
+            "<b>%{y}</b><br>"
+            "Month: %{x}<br>"
+            "Transactions: <b>%{z:,}</b>"
+            "<extra></extra>",
+            colorbar=dict(title="Transactions")
+        )
+    )
+
+    fig.update_layout(
+        title="Cross-chain Transactions Heatmap",
+        template="plotly_white",
+        height=430,
+        margin=dict(l=10, r=10, t=50, b=10),
+        xaxis_title="Month",
+        yaxis_title=""
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
