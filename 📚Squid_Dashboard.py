@@ -568,4 +568,102 @@ with c6:
         f"{tx_6m:.2f}%"
     )
 
- 
+# ==========================================================================================
+# VOLUME & TRANSACTIONS OVER TIME
+# ==========================================================================================
+
+left, right = st.columns(2)
+
+# ------------------------------------------------------------------------------
+# Volume Chart
+# ------------------------------------------------------------------------------
+
+with left:
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=chart_df["timestamp"],
+            y=chart_df["volume"],
+            mode="lines",
+            name="Volume",
+            line=dict(
+                color="#c58ce2",
+                width=3
+            ),
+            fill="tozeroy",
+            fillcolor="rgba(197,140,226,0.18)"
+        )
+    )
+
+    fig.update_layout(
+        title="Cross-chain Volume Over Time",
+        height=430,
+        template="plotly_white",
+        hovermode="x unified",
+        margin=dict(l=10, r=10, t=45, b=10),
+        xaxis_title="",
+        yaxis_title="Volume ($)",
+        showlegend=False
+    )
+
+    fig.update_xaxes(
+        showgrid=False
+    )
+
+    fig.update_yaxes(
+        gridcolor="rgba(0,0,0,0.08)"
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+# ------------------------------------------------------------------------------
+# Transactions Chart
+# ------------------------------------------------------------------------------
+
+with right:
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=chart_df["timestamp"],
+            y=chart_df["num_txs"],
+            mode="lines",
+            name="Transactions",
+            line=dict(
+                color="#e1fb43",
+                width=3
+            ),
+            fill="tozeroy",
+            fillcolor="rgba(225,251,67,0.20)"
+        )
+    )
+
+    fig.update_layout(
+        title="Cross-chain Transactions Over Time",
+        height=430,
+        template="plotly_white",
+        hovermode="x unified",
+        margin=dict(l=10, r=10, t=45, b=10),
+        xaxis_title="",
+        yaxis_title="Transactions",
+        showlegend=False
+    )
+
+    fig.update_xaxes(
+        showgrid=False
+    )
+
+    fig.update_yaxes(
+        gridcolor="rgba(0,0,0,0.08)"
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    ) 
