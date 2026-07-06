@@ -91,10 +91,10 @@ c1, c2, c3 = st.columns([1.3, 1.3, 0.8])
 with c1:
     start_date = st.date_input(
         "Start Date",
-        value=datetime(2022, 12, 1).date()
+        value=datetime(2022, 12, 1).date(),
         min_value=datetime(2022, 12, 1).date(),
         max_value=today
-    )
+     )
 
 with c2:
     end_date = st.date_input(
