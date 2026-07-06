@@ -5,19 +5,12 @@ import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, timedelta
 
-# ==========================================================================================
-# PAGE CONFIG
-# ==========================================================================================
 
-st.set_page_config(
-    page_title="SquidRouter On-Chain Analytics",
-    page_icon="https://images.cryptorank.io/coins/150x150.squid1675241862798.png",
-    layout="wide"
-)
+# ================ PAGE CONFIG ================
 
-# ==========================================================================================
-# CUSTOM CSS
-# ==========================================================================================
+st.set_page_config(page_title="SquidRouter On-Chain Analytics", page_icon="https://images.cryptorank.io/coins/150x150.squid1675241862798.png", layout="wide")
+
+# ================ CUSTOM CSS ================
 
 st.markdown(
     """
@@ -38,9 +31,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ==========================================================================================
-# HEADER
-# ==========================================================================================
+# ================ HEADER ================
 
 st.markdown(
     """
@@ -53,9 +44,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ==========================================================================================
-# BUILDER INFO
-# ==========================================================================================
+# ================ BUILDER INFO ================
 
 st.markdown(
     """
@@ -73,80 +62,37 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ==========================================================================================
-# INFO
-# ==========================================================================================
-
+# ================ INFO ================
 st.info("📊 On-chain analytics dashboard for SquidRouter cross-chain activity.")
 st.info("⏳ Data is fetched from AxelarScan APIs and may take a few seconds.")
 
-# ==========================================================================================
-# FILTERS
-# ==========================================================================================
+# ================ FILTERS ================
 
 today = datetime.utcnow().date()
-
 c1, c2, c3 = st.columns([1.3, 1.3, 0.8])
-
 with c1:
-    start_date = st.date_input(
-        "Start Date",
-        value=datetime(2022, 12, 1).date(),
-        min_value=datetime(2022, 12, 1).date(),
-        max_value=today
-     )
-
+    start_date = st.date_input("Start Date", value=datetime(2022, 12, 1).date(), min_value=datetime(2022, 12, 1).date(), max_value=today)
 with c2:
-    end_date = st.date_input(
-        "End Date",
-        value=today
-    )
-
+    end_date = st.date_input("End Date", value=today)
 with c3:
-    timeframe = st.selectbox(
-        "Time Frame",
-        ["Month", "Week", "Day"]
-    )
+    timeframe = st.selectbox("Time Frame", ["Month", "Week", "Day"])
 
 st.divider()
 
-# ==========================================================================================
-# CONTRACTS
-# ==========================================================================================
+# ================ CONTRACTS ================
 
-CONTRACTS = [
-    "0xce16F69375520ab01377ce7B88f5BA8C48F8D666",
-    "0x492751eC3c57141deb205eC2da8bFcb410738630",
-    "0xDC3D8e1Abe590BCa428a8a2FC4CfDbD1AcF57Bd9",
-    "0xdf4fFDa22270c12d0b5b3788F1669D709476111E",
-    "0xe6B3949F9bBF168f4E3EFc82bc8FD849868CC6d8"
-]
+CONTRACTS = ["0xce16F69375520ab01377ce7B88f5BA8C48F8D666", "0x492751eC3c57141deb205eC2da8bFcb410738630", "0xDC3D8e1Abe590BCa428a8a2FC4CfDbD1AcF57Bd9",
+    "0xdf4fFDa22270c12d0b5b3788F1669D709476111E", "0xe6B3949F9bBF168f4E3EFc82bc8FD849868CC6d8"]
 
-# ==========================================================================================
-# LOAD DATA
-# ==========================================================================================
+# ================ LOAD DATA ================ 
 
 @st.cache_data(ttl=3600)
 def load_data(start_date, end_date):
 
-    from_time = int(
-        datetime.combine(
-            start_date,
-            datetime.min.time()
-        ).timestamp()
-    )
-
-    to_time = int(
-        datetime.combine(
-            end_date,
-            datetime.max.time()
-        ).timestamp()
-    )
-
+    from_time = int(datetime.combine(start_date, datetime.min.time()).timestamp())
+    to_time = int(datetime.combine(end_date, datetime.max.time()).timestamp())
     dfs = []
-
     for contract in CONTRACTS:
-
         url = (
             "https://api.axelarscan.io/api/interchainChart"
             f"?contractAddress={contract}"
@@ -156,64 +102,33 @@ def load_data(start_date, end_date):
 
         try:
             r = requests.get(url, timeout=60)
-
             if r.status_code != 200:
                 continue
-
             data = r.json().get("data", [])
-
             if not data:
                 continue
-
             df = pd.DataFrame(data)
             dfs.append(df)
-
         except Exception:
             continue
-
     if not dfs:
         return pd.DataFrame()
-
     df = pd.concat(dfs, ignore_index=True)
 
-    numeric_cols = [
-        "volume",
-        "num_txs",
-        "gmp_volume",
-        "gmp_num_txs",
-        "transfers_volume",
-        "transfers_num_txs"
-    ]
-
+    numeric_cols = ["volume", "num_txs", "gmp_volume", "gmp_num_txs", "transfers_volume", "transfers_num_txs"]
     for col in numeric_cols:
-        df[col] = pd.to_numeric(
-            df[col],
-            errors="coerce"
-        ).fillna(0)
-
-    df["timestamp"] = pd.to_datetime(
-        df["timestamp"],
-        unit="ms"
-    )
-
+        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+    df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
     return df
 
-# ==========================================================================================
-# LOAD FILTERED DATA
-# ==========================================================================================
+# ================ LOAD FILTERED DATA ================
 
-filtered_df = load_data(
-    start_date,
-    end_date
-)
-
+filtered_df = load_data(start_date, end_date)
 if filtered_df.empty:
     st.warning("No data found for selected range.")
     st.stop()
 
-# ==========================================================================================
-# DAILY AGGREGATION
-# ==========================================================================================
+# ================ DAILY AGGREGATION ================
 
 filtered_df = (
     filtered_df
@@ -232,22 +147,17 @@ filtered_df = (
     .reset_index(drop=True)
 )
 
-# ==========================================================================================
-# TIMEFRAME TRANSFORMATION (OPTIMIZED)
-# ==========================================================================================
+# ================ TIMEFRAME TRANSFORMATION ================
 
 filtered_df = filtered_df.copy()
 filtered_df["timestamp"] = pd.to_datetime(filtered_df["timestamp"], errors="coerce")
 filtered_df = filtered_df.dropna(subset=["timestamp"])
-
 filtered_df = filtered_df.sort_values("timestamp")
-
 freq_map = {
     "Month": "ME",
     "Week": "W",
     "Day": "D"
 }
-
 chart_df = (
     filtered_df
     .set_index("timestamp")
@@ -258,194 +168,96 @@ chart_df = (
     })
     .reset_index()
 )
-
 chart_df = chart_df.dropna()
 
-# ==========================================================================================
-# BASE KPI CALCULATIONS
-# ==========================================================================================
+# ================ BASE KPI CALCULATIONS ================
 
 total_volume = chart_df["volume"].sum()
-
-total_transactions = int(
-    chart_df["num_txs"].sum()
-)
-
+total_transactions = int(chart_df["num_txs"].sum())
 avg_volume_per_txn = (
     total_volume / total_transactions
     if total_transactions > 0
     else 0
 )
 
-# ==========================================================================================
-# KPI ROW
-# ==========================================================================================
+# ================ KPI ROW ================
 
 kpi1, kpi2, kpi3 = st.columns(3)
-
 with kpi1:
-    st.metric(
-        label="Total Volume",
-        value=f"${total_volume:,.2f}"
-    )
-
+    st.metric(label="Total Volume", value=f"${total_volume:,.2f}")
 with kpi2:
-    st.metric(
-        label="Total Transactions",
-        value=f"{total_transactions:,}"
-    )
-
+    st.metric(label="Total Transactions", value=f"{total_transactions:,}")
 with kpi3:
-    st.metric(
-        label="Avg Volume per Txn",
-        value=f"${avg_volume_per_txn:,.2f}"
-    )
+    st.metric(label="Avg Volume per Txn", value=f"${avg_volume_per_txn:,.2f}")
 
-# ==========================================================================================
-# NUMBER FORMATTER
-# ==========================================================================================
+# ================ NUMBER FORMATTER ================
 
 def format_number(value, prefix=""):
-
     if value >= 1_000_000_000:
         return f"{prefix}{value / 1_000_000_000:.2f}B"
-
     elif value >= 1_000_000:
         return f"{prefix}{value / 1_000_000:.2f}M"
-
     elif value >= 1_000:
         return f"{prefix}{value / 1_000:.2f}K"
-
     else:
-
         if isinstance(value, float):
             return f"{prefix}{value:,.2f}"
-
         return f"{prefix}{value:,}"
 
-# ==========================================================================================
-# DAILY STATISTICS
-# ==========================================================================================
+# ================ DAILY STATISTICS ================ 
 
 daily_df = filtered_df.copy()
 
-# --------------------------
-# Volume Statistics
-# --------------------------
+# ================ Volume Statistics ================
 
 max_daily_volume = daily_df["volume"].max()
-
 median_daily_volume = daily_df["volume"].median()
-
 avg_daily_volume = daily_df["volume"].mean()
 
-# --------------------------
-# Transaction Statistics
-# --------------------------
+# ================ Transaction Statistics ================
 
-max_daily_tx = int(
-    daily_df["num_txs"].max()
-)
+max_daily_tx = int(daily_df["num_txs"].max())
+median_daily_tx = int(daily_df["num_txs"].median())
+avg_daily_tx = int(daily_df["num_txs"].mean())
 
-median_daily_tx = int(
-    daily_df["num_txs"].median()
-)
-
-avg_daily_tx = int(
-    daily_df["num_txs"].mean()
-)
-
-# ==========================================================================================
-# DAILY KPI ROW
-# ==========================================================================================
+# ================ DAILY KPI ROW ================
 
 k1, k2, k3, k4, k5, k6 = st.columns(6)
-
 with k1:
-    st.metric(
-        "Max Daily Volume",
-        format_number(max_daily_volume, "$")
-    )
-
+    st.metric("Max Daily Volume", format_number(max_daily_volume, "$"))
 with k2:
-    st.metric(
-        "Median Daily Volume",
-        format_number(median_daily_volume, "$")
-    )
-
+    st.metric("Median Daily Volume", format_number(median_daily_volume, "$"))
 with k3:
-    st.metric(
-        "Avg Daily Volume",
-        format_number(avg_daily_volume, "$")
-    )
-
+    st.metric("Avg Daily Volume", format_number(avg_daily_volume, "$"))
 with k4:
-    st.metric(
-        "Max Daily Txn",
-        format_number(max_daily_tx)
-    )
-
+    st.metric("Max Daily Txn", format_number(max_daily_tx))
 with k5:
-    st.metric(
-        "Median Daily Txn",
-        format_number(median_daily_tx)
-    )
-
+    st.metric("Median Daily Txn", format_number(median_daily_tx))
 with k6:
-    st.metric(
-        "Avg Daily Txn",
-        format_number(avg_daily_tx)
-    )
+    st.metric("Avg Daily Txn", format_number(avg_daily_tx))
 
 st.divider()
 
-# ==========================================================================================
-# LOAD FULL DATASET
-# ==========================================================================================
+# ================ LOAD FULL DATASET ================
 
 full_start = datetime(2024, 1, 1).date()
 full_end = datetime.utcnow().date()
-
-full_df = load_data(
-    full_start,
-    full_end
-)
-
+full_df = load_data(full_start, full_end)
 if full_df.empty:
     st.warning("No data available for KPIs")
     st.stop()
 
-# ==========================================================================================
-# CLEAN TIMESTAMP
-# ==========================================================================================
+# ================ CLEAN TIMESTAMP ================
 
-full_df["timestamp"] = pd.to_numeric(
-    full_df["timestamp"],
-    errors="coerce"
-)
-
-full_df = full_df.dropna(
-    subset=["timestamp"]
-)
-
+full_df["timestamp"] = pd.to_numeric(full_df["timestamp"], errors="coerce")
+full_df = full_df.dropna(subset=["timestamp"])
 full_df["timestamp"] = full_df["timestamp"].astype("int64")
+full_df["timestamp"] = pd.to_datetime(full_df["timestamp"], unit="ms", errors="coerce")
+full_df = full_df.dropna(subset=["timestamp"])
 
-full_df["timestamp"] = pd.to_datetime(
-    full_df["timestamp"],
-    unit="ms",
-    errors="coerce"
-)
-
-full_df = full_df.dropna(
-    subset=["timestamp"]
-)
-
-# ==========================================================================================
-# DAILY AGGREGATION
-# ==========================================================================================
+# ================ DAILY AGGREGATION ================
 
 full_df["date"] = full_df["timestamp"].dt.floor("D")
-
 full_df = (
     full_df
     .groupby("date", as_index=False)
@@ -463,245 +275,72 @@ full_df = (
     .reset_index(drop=True)
 )
 
-# ==========================================================================================
-# GROWTH FUNCTION
-# ==========================================================================================
+# ================ GROWTH FUNCTION ================
 
 def growth_from_window(df, column, days):
-
     if len(df) < days * 2:
         return 0
-
-    last_window = (
-        df.iloc[-days:][column].sum()
-    )
-
-    previous_window = (
-        df.iloc[-(2 * days):-days][column].sum()
-    )
-
+    last_window = (df.iloc[-days:][column].sum())
+    previous_window = (df.iloc[-(2 * days):-days][column].sum())
     if previous_window <= 0:
         return 0
+    return ((last_window - previous_window) / previous_window) * 100
 
-    return (
-        (last_window - previous_window)
-        / previous_window
-    ) * 100
+# ================ GROWTH KPI CALCULATIONS ================
 
-# ==========================================================================================
-# GROWTH KPI CALCULATIONS
-# ==========================================================================================
+volume_7d = growth_from_window(full_df, "volume", 7)
+volume_30d = growth_from_window(full_df, "volume", 30)
+volume_6m = growth_from_window(full_df, "volume", 180)
+tx_7d = growth_from_window(full_df, "num_txs", 7)
+tx_30d = growth_from_window(full_df, "num_txs", 30)
+tx_6m = growth_from_window(full_df, "num_txs", 180)
 
-volume_7d = growth_from_window(
-    full_df,
-    "volume",
-    7
-)
-
-volume_30d = growth_from_window(
-    full_df,
-    "volume",
-    30
-)
-
-volume_6m = growth_from_window(
-    full_df,
-    "volume",
-    180
-)
-
-tx_7d = growth_from_window(
-    full_df,
-    "num_txs",
-    7
-)
-
-tx_30d = growth_from_window(
-    full_df,
-    "num_txs",
-    30
-)
-
-tx_6m = growth_from_window(
-    full_df,
-    "num_txs",
-    180
-)
-
-# ==========================================================================================
-# GROWTH KPI ROW
-# ==========================================================================================
+# ================ GROWTH KPI ROW ================
 
 c1, c2, c3, c4, c5, c6 = st.columns(6)
-
 with c1:
-    st.metric(
-        "7D Volume",
-        f"{volume_7d:.2f}%"
-    )
-
+    st.metric("7D Volume", f"{volume_7d:.2f}%")
 with c2:
-    st.metric(
-        "30D Volume",
-        f"{volume_30d:.2f}%"
-    )
-
+    st.metric("30D Volume", f"{volume_30d:.2f}%")
 with c3:
-    st.metric(
-        "6M Volume",
-        f"{volume_6m:.2f}%"
-    )
-
+    st.metric("6M Volume", f"{volume_6m:.2f}%")
 with c4:
-    st.metric(
-        "7D Tx",
-        f"{tx_7d:.2f}%"
-    )
-
+    st.metric("7D Tx", f"{tx_7d:.2f}%")
 with c5:
-    st.metric(
-        "30D Tx",
-        f"{tx_30d:.2f}%"
-    )
-
+    st.metric("30D Tx", f"{tx_30d:.2f}%")
 with c6:
-    st.metric(
-        "6M Tx",
-        f"{tx_6m:.2f}%"
-    )
+    st.metric("6M Tx", f"{tx_6m:.2f}%")
 
-# ==========================================================================================
-# VOLUME & TRANSACTIONS OVER TIME
-# ==========================================================================================
+# ================ VOLUME & TRANSACTIONS OVER TIME ================
 
 col1, col2 = st.columns(2)
-
-# ==========================================================================================
-# CROSS-CHAIN VOLUME
-# ==========================================================================================
-
 with col1:
-
     fig = go.Figure()
-
-    fig.add_trace(
-        go.Bar(
-            x=chart_df["timestamp"],
-            y=chart_df["volume"],
-            marker=dict(
-                color="#c58ce2",
-                line=dict(
-                    color="#c58ce2",
-                    width=0
-                )
-            ),
+    fig.add_trace(go.Bar(x=chart_df["timestamp"], y=chart_df["volume"], marker=dict(color="#c58ce2", line=dict( color="#c58ce2", width=0)),
             hovertemplate=
             "<b>%{x|%Y-%m-%d}</b><br>"
             "Volume: <b>$%{y:,.2f}</b>"
             "<extra></extra>"
         )
     )
-
-    fig.update_layout(
-        title="Cross-chain Volume Over Time",
-        template="plotly_white",
-        height=430,
-        bargap=0.15,
-        showlegend=False,
-        hovermode="x unified",
-        margin=dict(
-            l=10,
-            r=10,
-            t=50,
-            b=10
-        ),
-        xaxis_title="",
-        yaxis_title="Volume ($)"
-    )
-
-    fig.update_xaxes(
-        showgrid=False,
-        zeroline=False
-    )
-
-    fig.update_xaxes(
-    range=[
-        pd.Timestamp(start_date),
-        pd.Timestamp(end_date)
-    ]
-    )
-
-    fig.update_yaxes(
-        gridcolor="rgba(0,0,0,0.08)",
-        zeroline=False
-    )
-
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
-
-# ==========================================================================================
-# CROSS-CHAIN TRANSACTIONS
-# ==========================================================================================
-
+    fig.update_layout(title="Cross-chain Volume Over Time", template="plotly_white", height=430, bargap=0.15, showlegend=False, hovermode="x unified", margin=dict(l=10,r=10,t=50,b=10),
+        xaxis_title="", yaxis_title="Volume ($)")
+    fig.update_xaxes(showgrid=False, zeroline=False)
+    fig.update_xaxes(range=[pd.Timestamp(start_date), pd.Timestamp(end_date)])
+    fig.update_yaxes( gridcolor="rgba(0,0,0,0.08)", zeroline=False)
+    st.plotly_chart(fig, use_container_width=True)
 with col2:
-
     fig = go.Figure()
-
-    fig.add_trace(
-        go.Bar(
-            x=chart_df["timestamp"],
-            y=chart_df["num_txs"],
-            marker=dict(
-                color="#e1fb43",
-                line=dict(
-                    color="#e1fb43",
-                    width=0
-                )
-            ),
+    fig.add_trace(go.Bar(x=chart_df["timestamp"], y=chart_df["num_txs"], marker=dict(color="#e1fb43", line=dict(color="#e1fb43", width=0)),
             hovertemplate=
             "<b>%{x|%Y-%m-%d}</b><br>"
             "Transactions: <b>%{y:,}</b>"
             "<extra></extra>"
         )
     )
-
-    fig.update_layout(
-        title="Cross-chain Transactions Over Time",
-        template="plotly_white",
-        height=430,
-        bargap=0.15,
-        showlegend=False,
-        hovermode="x unified",
-        margin=dict(
-            l=10,
-            r=10,
-            t=50,
-            b=10
-        ),
-        xaxis_title="",
-        yaxis_title="Transactions"
-    )
-
-    fig.update_xaxes(
-        showgrid=False,
-        zeroline=False
-    )
-
-    fig.update_xaxes(
-    range=[
-        pd.Timestamp(start_date),
-        pd.Timestamp(end_date)
-    ]
-    )
-
-    fig.update_yaxes(
-        gridcolor="rgba(0,0,0,0.08)",
-        zeroline=False
-    )
-
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
+    fig.update_layout(title="Cross-chain Transactions Over Time", template="plotly_white", height=430, bargap=0.15, showlegend=False,
+        hovermode="x unified", margin=dict(l=10, r=10, t=50, b=10), xaxis_title="", yaxis_title="Transactions")
+    fig.update_xaxes(showgrid=False, zeroline=False)
+    fig.update_xaxes(range=[pd.Timestamp(start_date), pd.Timestamp(end_date)])
+    fig.update_yaxes(gridcolor="rgba(0,0,0,0.08)", zeroline=False)
+    st.plotly_chart(fig, use_container_width=True)
