@@ -741,3 +741,138 @@ with col2:
     fig.update_yaxes(gridcolor="rgba(0,0,0,0.08)")
 
     st.plotly_chart(fig, use_container_width=True)
+
+# ================================================================== Part II: User Analysis ==============================================================================
+# ================ USER ANALYTICS FILTERS ================
+
+st.divider()
+st.header("👥 User Analytics")
+
+today = datetime.utcnow().date()
+
+u1, u2 = st.columns(2)
+
+with u1:
+    user_start_date = st.date_input(
+        "Start Date",
+        value=datetime(2024,1,1).date(),
+        key="user_start"
+    )
+
+with u2:
+    user_end_date = st.date_input(
+        "End Date",
+        value=today,
+        key="user_end"
+    )
+
+# ================ LOAD USER DATA ================
+
+@st.cache_data(ttl=3600)
+def load_user_data(start_date, end_date):
+
+    from_time = int(datetime.combine(start_date, datetime.min.time()).timestamp())
+    to_time = int(datetime.combine(end_date, datetime.max.time()).timestamp())
+
+    dfs = []
+
+    for contract in CONTRACTS:
+
+        url = (
+            "https://api.axelarscan.io/gmp/GMPTopUsers"
+            f"?contractAddress={contract}"
+            f"&fromTime={from_time}"
+            f"&toTime={to_time}"
+        )
+
+        try:
+
+            r = requests.get(url, timeout=60)
+
+            if r.status_code != 200:
+                continue
+
+            data = r.json().get("data", [])
+
+            if len(data) == 0:
+                continue
+
+            df = pd.DataFrame(data)
+
+            dfs.append(df)
+
+        except Exception:
+            continue
+
+    if len(dfs) == 0:
+        return pd.DataFrame()
+
+    df = pd.concat(dfs, ignore_index=True)
+
+    df["volume"] = pd.to_numeric(df["volume"], errors="coerce").fillna(0)
+    df["num_txs"] = pd.to_numeric(df["num_txs"], errors="coerce").fillna(0)
+
+    # -------- Aggregate same users across contracts --------
+
+    df = (
+        df.groupby("key", as_index=False)
+        .agg(
+            volume=("volume","sum"),
+            num_txs=("num_txs","sum")
+        )
+        .sort_values("volume", ascending=False)
+        .reset_index(drop=True)
+    )
+
+    return df
+
+user_df = load_user_data(user_start_date, user_end_date)
+
+if user_df.empty:
+    st.warning("No user data found.")
+    st.stop()
+
+# ================ USER KPIs ================
+
+unique_users = len(user_df)
+
+avg_volume_user = user_df["volume"].mean()
+
+avg_tx_user = user_df["num_txs"].mean()
+
+median_volume_user = user_df["volume"].median()
+
+median_tx_user = user_df["num_txs"].median()
+
+
+k1,k2,k3,k4,k5 = st.columns(5)
+
+with k1:
+    st.metric(
+        "Unique Users",
+        format_number(unique_users)
+    )
+
+with k2:
+    st.metric(
+        "Avg Volume per User",
+        format_number(avg_volume_user,"$")
+    )
+
+with k3:
+    st.metric(
+        "Avg Txn per User",
+        f"{avg_tx_user:.2f}"
+    )
+
+with k4:
+    st.metric(
+        "Median Volume per User",
+        format_number(median_volume_user,"$")
+    )
+
+with k5:
+    st.metric(
+        "Median Txn per User",
+        f"{median_tx_user:.2f}"
+    )
