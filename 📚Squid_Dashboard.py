@@ -642,28 +642,31 @@ avg_weekday["weekday"] = pd.Categorical(
 avg_weekday = avg_weekday.sort_values("weekday")
 
 
-# ---------- Color Generator ----------
+# ---------- Color Helper ----------
 
-def generate_colors(values):
-    vmin = values.min()
-    vmax = values.max()
+BASE_COLOR = "#c58ce2"
+MIN_COLOR = "#f4a6a6"     # Soft Red
+MAX_COLOR = "#8fd19e"     # Soft Green
 
-    colors = []
 
-    for v in values:
+def highlight_colors(values):
 
-        if vmax == vmin:
-            alpha = 1
-        else:
-            alpha = 0.25 + 0.75 * ((v - vmin) / (vmax - vmin))
+    colors = [BASE_COLOR] * len(values)
 
-        colors.append(f"rgba(197,140,226,{alpha:.3f})")
+    min_value = values.min()
+    max_value = values.max()
+
+    for i, v in enumerate(values):
+        if v == min_value:
+            colors[i] = MIN_COLOR
+        if v == max_value:
+            colors[i] = MAX_COLOR
 
     return colors
 
 
-volume_colors = generate_colors(avg_weekday["avg_volume"])
-tx_colors = generate_colors(avg_weekday["avg_txs"])
+volume_colors = highlight_colors(avg_weekday["avg_volume"])
+tx_colors = highlight_colors(avg_weekday["avg_txs"])
 
 col1, col2 = st.columns(2)
 
@@ -679,7 +682,7 @@ with col1:
             y=avg_weekday["avg_volume"],
             marker=dict(
                 color=volume_colors,
-                line=dict(color="#c58ce2", width=1)
+                line=dict(color=volume_colors, width=1)
             ),
             hovertemplate=
             "<b>%{x}</b><br>"
@@ -695,7 +698,7 @@ with col1:
         showlegend=False,
         margin=dict(l=10, r=10, t=50, b=10),
         xaxis_title="",
-        yaxis_title="Volume ($)"
+        yaxis_title="Average Volume ($)"
     )
 
     fig.update_xaxes(showgrid=False)
@@ -715,7 +718,7 @@ with col2:
             y=avg_weekday["avg_txs"],
             marker=dict(
                 color=tx_colors,
-                line=dict(color="#c58ce2", width=1)
+                line=dict(color=tx_colors, width=1)
             ),
             hovertemplate=
             "<b>%{x}</b><br>"
@@ -731,7 +734,7 @@ with col2:
         showlegend=False,
         margin=dict(l=10, r=10, t=50, b=10),
         xaxis_title="",
-        yaxis_title="Transactions"
+        yaxis_title="Average Transactions"
     )
 
     fig.update_xaxes(showgrid=False)
