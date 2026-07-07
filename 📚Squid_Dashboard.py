@@ -607,3 +607,134 @@ with col2:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+# ================ AVERAGE BY WEEKDAY ================
+
+weekday_df = filtered_df.copy()
+
+weekday_df["weekday"] = weekday_df["timestamp"].dt.day_name()
+
+weekday_order = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday"
+]
+
+avg_weekday = (
+    weekday_df
+    .groupby("weekday", as_index=False)
+    .agg(
+        avg_volume=("volume", "mean"),
+        avg_txs=("num_txs", "mean")
+    )
+)
+
+avg_weekday["weekday"] = pd.Categorical(
+    avg_weekday["weekday"],
+    categories=weekday_order,
+    ordered=True
+)
+
+avg_weekday = avg_weekday.sort_values("weekday")
+
+
+# ---------- Color Generator ----------
+
+def generate_colors(values):
+    vmin = values.min()
+    vmax = values.max()
+
+    colors = []
+
+    for v in values:
+
+        if vmax == vmin:
+            alpha = 1
+        else:
+            alpha = 0.25 + 0.75 * ((v - vmin) / (vmax - vmin))
+
+        colors.append(f"rgba(197,140,226,{alpha:.3f})")
+
+    return colors
+
+
+volume_colors = generate_colors(avg_weekday["avg_volume"])
+tx_colors = generate_colors(avg_weekday["avg_txs"])
+
+col1, col2 = st.columns(2)
+
+# ================= Average Volume =================
+
+with col1:
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Bar(
+            x=avg_weekday["weekday"],
+            y=avg_weekday["avg_volume"],
+            marker=dict(
+                color=volume_colors,
+                line=dict(color="#c58ce2", width=1)
+            ),
+            hovertemplate=
+            "<b>%{x}</b><br>"
+            "Average Volume: <b>$%{y:,.2f}</b>"
+            "<extra></extra>"
+        )
+    )
+
+    fig.update_layout(
+        title="Average Daily Volume by Weekday",
+        template="plotly_white",
+        height=430,
+        showlegend=False,
+        margin=dict(l=10, r=10, t=50, b=10),
+        xaxis_title="",
+        yaxis_title="Volume ($)"
+    )
+
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(gridcolor="rgba(0,0,0,0.08)")
+
+    st.plotly_chart(fig, use_container_width=True)
+
+# ================= Average Transactions =================
+
+with col2:
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Bar(
+            x=avg_weekday["weekday"],
+            y=avg_weekday["avg_txs"],
+            marker=dict(
+                color=tx_colors,
+                line=dict(color="#c58ce2", width=1)
+            ),
+            hovertemplate=
+            "<b>%{x}</b><br>"
+            "Average Transactions: <b>%{y:,.1f}</b>"
+            "<extra></extra>"
+        )
+    )
+
+    fig.update_layout(
+        title="Average Daily Transactions by Weekday",
+        template="plotly_white",
+        height=430,
+        showlegend=False,
+        margin=dict(l=10, r=10, t=50, b=10),
+        xaxis_title="",
+        yaxis_title="Transactions"
+    )
+
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(gridcolor="rgba(0,0,0,0.08)")
+
+    st.plotly_chart(fig, use_container_width=True)
