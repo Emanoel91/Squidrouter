@@ -1034,3 +1034,163 @@ with col2:
     )
 
     st.plotly_chart(fig,use_container_width=True)
+
+# ================ USER TRANSACTION DISTRIBUTION ================
+
+tx_dist_df = user_df.copy()
+
+# -------- Buckets --------
+
+bins = [
+    0,
+    1,
+    5,
+    10,
+    20,
+    50,
+    100,
+    float("inf")
+]
+
+labels = [
+    "1 Txn",
+    "2-5 Txns",
+    "6-10 Txns",
+    "11-20 Txns",
+    "21-50 Txns",
+    "51-100 Txns",
+    ">100 Txns"
+]
+
+tx_dist_df["bucket"] = pd.cut(
+    tx_dist_df["num_txs"],
+    bins=bins,
+    labels=labels,
+    include_lowest=True,
+    right=True
+)
+
+bucket_df = (
+    tx_dist_df
+    .groupby("bucket", observed=False)
+    .size()
+    .reset_index(name="users")
+)
+
+bucket_df["percent"] = (
+    bucket_df["users"]
+    / bucket_df["users"].sum()
+    * 100
+)
+
+bucket_df = bucket_df.sort_values("bucket")
+
+
+# -------- Color Scale --------
+
+base_rgb = (225, 251, 67)
+
+vmin = bucket_df["users"].min()
+vmax = bucket_df["users"].max()
+
+colors = []
+
+for value in bucket_df["users"]:
+
+    if vmax == vmin:
+        alpha = 1
+    else:
+        alpha = 0.30 + 0.70 * ((value - vmin) / (vmax - vmin))
+
+    colors.append(
+        f"rgba({base_rgb[0]},{base_rgb[1]},{base_rgb[2]},{alpha:.3f})"
+    )
+
+col1, col2 = st.columns(2)
+
+# ================= DONUT =================
+
+with col1:
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Pie(
+            labels=bucket_df["bucket"],
+            values=bucket_df["users"],
+            hole=0.45,
+            marker=dict(
+                colors=colors,
+                line=dict(color="white", width=2)
+            ),
+            textinfo="percent",
+            textposition="inside",
+            insidetextorientation="auto",
+            hovertemplate=
+            "<b>%{label}</b><br>"
+            "Users: %{value:,}<br>"
+            "Share: %{percent}"
+            "<extra></extra>"
+        )
+    )
+
+    fig.update_layout(
+        title="User Transaction Distribution",
+        template="plotly_white",
+        height=430,
+        margin=dict(l=10, r=10, t=50, b=10),
+        showlegend=True,
+        legend=dict(
+            title="Transaction Bucket",
+            orientation="v",
+            y=0.5,
+            yanchor="middle",
+            x=1.02,
+            xanchor="left",
+            font=dict(size=13)
+        )
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+# ================= BAR =================
+
+with col2:
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Bar(
+            x=bucket_df["bucket"],
+            y=bucket_df["users"],
+            marker=dict(
+                color=colors,
+                line=dict(color=colors, width=1)
+            ),
+            text=bucket_df["users"].map("{:,}".format),
+            textposition="outside",
+            cliponaxis=False,
+            hovertemplate=
+            "<b>%{x}</b><br>"
+            "Users: %{y:,}"
+            "<extra></extra>"
+        )
+    )
+
+    fig.update_layout(
+        title="Users by Transaction Bucket",
+        template="plotly_white",
+        height=430,
+        showlegend=False,
+        margin=dict(l=10, r=10, t=50, b=10),
+        xaxis_title="Transaction Bucket",
+        yaxis_title="Users"
+    )
+
+    fig.update_xaxes(showgrid=False)
+
+    fig.update_yaxes(
+        gridcolor="rgba(0,0,0,0.08)"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
