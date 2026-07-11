@@ -1121,7 +1121,7 @@ with col1:
             hole=0.45,
             marker=dict(
                 colors=colors,
-                line=dict(color="white", width=2)
+                line=dict(color="white", width=2) 
             ),
             textinfo="percent",
             textposition="inside",
