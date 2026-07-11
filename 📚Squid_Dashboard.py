@@ -1195,3 +1195,156 @@ with col2:
 
     st.plotly_chart(fig, use_container_width=True)
 
+# ================ USER SEGMENTATION HEATMAP ================
+
+heatmap_df = user_df.copy()
+
+# -------- Volume Buckets --------
+
+volume_bins = [
+    0,
+    100,
+    1_000,
+    10_000,
+    100_000,
+    1_000_000,
+    float("inf")
+]
+
+volume_labels = [
+    "<$100",
+    "$100-$1K",
+    "$1K-$10K",
+    "$10K-$100K",
+    "$100K-$1M",
+    ">$1M"
+]
+
+heatmap_df["volume_bucket"] = pd.cut(
+    heatmap_df["volume"],
+    bins=volume_bins,
+    labels=volume_labels,
+    include_lowest=True
+)
+
+# -------- Transaction Buckets --------
+
+tx_bins = [
+    0,
+    1,
+    5,
+    10,
+    20,
+    50,
+    100,
+    200,
+    500,
+    float("inf")
+]
+
+tx_labels = [
+    "1 Txn",
+    "2-5 Txns",
+    "6-10 Txns",
+    "11-20 Txns",
+    "21-50 Txns",
+    "51-100 Txns",
+    "101-200 Txns",
+    "200-500 Txns",
+    ">500 Txns"
+]
+
+heatmap_df["tx_bucket"] = pd.cut(
+    heatmap_df["num_txs"],
+    bins=tx_bins,
+    labels=tx_labels,
+    include_lowest=True
+)
+
+# -------- Pivot --------
+
+pivot = (
+    heatmap_df
+    .groupby(
+        ["volume_bucket", "tx_bucket"],
+        observed=False
+    )
+    .size()
+    .unstack(fill_value=0)
+)
+
+pivot = pivot.reindex(
+    index=volume_labels,
+    columns=tx_labels
+)
+
+# -------- Plot --------
+
+fig = go.Figure()
+
+fig.add_trace(
+
+    go.Heatmap(
+
+        z=pivot.values,
+
+        x=tx_labels,
+
+        y=volume_labels,
+
+        colorscale=[
+            [0.00, "#ffffff"],
+            [0.20, "#fafdc9"],
+            [0.40, "#f2f88f"],
+            [0.60, "#eaf45d"],
+            [0.80, "#e1fb43"],
+            [1.00, "#bfd700"]
+        ],
+
+        text=pivot.values,
+
+        texttemplate="%{text:,}",
+
+        textfont=dict(size=12),
+
+        hovertemplate=
+        "<b>Volume:</b> %{y}<br>"
+        "<b>Transactions:</b> %{x}<br>"
+        "<b>Users:</b> %{z:,}"
+        "<extra></extra>",
+
+        colorbar=dict(
+            title="Users"
+        )
+
+    )
+
+)
+
+fig.update_layout(
+
+    title="User Segmentation Heatmap",
+
+    template="plotly_white",
+
+    height=520,
+
+    margin=dict(
+        l=10,
+        r=10,
+        t=50,
+        b=10
+    ),
+
+    xaxis_title="Transaction Bucket",
+
+    yaxis_title="Volume Bucket"
+
+)
+
+fig.update_xaxes(showgrid=False)
+
+fig.update_yaxes(showgrid=False)
+
+st.plotly_chart(fig, use_container_width=True)
+
