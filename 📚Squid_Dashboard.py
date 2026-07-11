@@ -1318,13 +1318,14 @@ fig.add_trace(
         y=volume_labels,
 
         colorscale=[
-            [0.00, "#ffffff"],
-            [0.20, "#fafdc9"],
-            [0.40, "#f2f88f"],
-            [0.60, "#eaf45d"],
-            [0.80, "#e1fb43"],
-            [1.00, "#bfd700"]
-        ],
+            [0.00, "#c58ce2"],
+            [0.15, "#cfa0e6"],
+            [0.30, "#dcb8ed"],
+            [0.50, "#ece8c5"],
+            [0.70, "#f2f88f"],
+            [0.85, "#eaf45d"],
+           [1.00, "#e1fb43"]
+       ]
 
         text=text_matrix,
 
