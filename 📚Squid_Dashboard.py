@@ -1287,25 +1287,6 @@ percent_matrix = (
 ).round(1)
 
 # -------- Text Matrix --------
-def format_percent(p):
-
-    if p >= 10:
-        return f"{p:.2f}%"
-
-    elif p >= 1:
-        return f"{p:.3f}%"
-
-    elif p >= 0.1:
-        return f"{p:.4f}%"
-
-    elif p >= 0.01:
-        return f"{p:.5f}%"
-
-    elif p >= 0.001:
-        return f"{p:.6f}%"
-
-    else:
-        return f"{p:.7f}%"
 
 text_matrix = []
 
@@ -1317,7 +1298,7 @@ for i in range(len(volume_labels)):
 
         count = pivot.iloc[i, j]
         pct = percent_matrix.iloc[i, j]
-        row.append(f"{count:,}<br>{format_percent(pct)}")
+        row.append(f"{count:,}<br>{pct:.2f}%")
 
     text_matrix.append(row)
 
