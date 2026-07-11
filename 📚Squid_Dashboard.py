@@ -1278,6 +1278,31 @@ pivot = pivot.reindex(
     columns=tx_labels
 )
 
+# -------- Percentage Matrix --------
+
+total_users = pivot.values.sum()
+
+percent_matrix = (
+    pivot / total_users * 100
+).round(1)
+
+# -------- Text Matrix --------
+
+text_matrix = []
+
+for i in range(len(volume_labels)):
+
+    row = []
+
+    for j in range(len(tx_labels)):
+
+        count = pivot.iloc[i, j]
+        pct = percent_matrix.iloc[i, j]
+
+        row.append(f"{count:,}<br>{pct:.1f}%")
+
+    text_matrix.append(row)
+
 # -------- Plot --------
 
 fig = go.Figure()
@@ -1301,17 +1326,22 @@ fig.add_trace(
             [1.00, "#bfd700"]
         ],
 
-        text=pivot.values,
+        text=text_matrix,
 
-        texttemplate="%{text:,}",
+        texttemplate="%{text}",
 
-        textfont=dict(size=12),
+        textfont=dict(
+            size=11
+        ),
 
         hovertemplate=
         "<b>Volume:</b> %{y}<br>"
         "<b>Transactions:</b> %{x}<br>"
-        "<b>Users:</b> %{z:,}"
+        "<b>Users:</b> %{z:,}<br>"
+        "<b>Share:</b> %{customdata:.2f}%"
         "<extra></extra>",
+
+        customdata=percent_matrix.values,
 
         colorbar=dict(
             title="Users"
@@ -1327,7 +1357,7 @@ fig.update_layout(
 
     template="plotly_white",
 
-    height=520,
+    height=540,
 
     margin=dict(
         l=10,
