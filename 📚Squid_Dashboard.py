@@ -1325,7 +1325,7 @@ fig.add_trace(
             [0.70, "#f2f88f"],
             [0.85, "#eaf45d"],
            [1.00, "#e1fb43"]
-       ]
+       ],
 
         text=text_matrix,
 
