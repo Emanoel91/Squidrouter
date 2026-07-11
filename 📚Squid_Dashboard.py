@@ -963,8 +963,9 @@ with col1:
                 colors=colors,
                 line=dict(color="white", width=2)
             ),
-            textinfo="percent+label",
-            textposition="outside",
+            textinfo="percent",
+            textposition="inside",
+            insidetextorientation="auto",
             hovertemplate=
             "<b>%{label}</b><br>"
             "Users: %{value:,}<br>"
@@ -977,11 +978,20 @@ with col1:
         title="User Volume Distribution",
         template="plotly_white",
         height=430,
-        margin=dict(l=10,r=10,t=50,b=10),
-        showlegend=False
+        margin=dict(l=10, r=10, t=50, b=10),
+        showlegend=True,
+        legend=dict(
+            title="Volume Bucket",
+            orientation="v",
+            y=0.5,
+            yanchor="middle",
+            x=1.02,
+            xanchor="left",
+            font=dict(size=13)
+        )
     )
 
-    st.plotly_chart(fig,use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True)
 
 # ================= BAR =================
 
