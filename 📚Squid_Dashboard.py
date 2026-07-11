@@ -1299,7 +1299,7 @@ for i in range(len(volume_labels)):
         count = pivot.iloc[i, j]
         pct = percent_matrix.iloc[i, j]
 
-        row.append(f"{count:,}<br>{pct:.1f}%")
+        row.append(f"{count:,}<br>{pct:.3f}%")
 
     text_matrix.append(row)
 
@@ -1318,14 +1318,18 @@ fig.add_trace(
         y=volume_labels,
 
         colorscale=[
-            [0.00, "#c58ce2"],
-            [0.15, "#cfa0e6"],
-            [0.30, "#dcb8ed"],
-            [0.50, "#ece8c5"],
-            [0.70, "#f2f88f"],
-            [0.85, "#eaf45d"],
-           [1.00, "#e1fb43"]
-       ],
+    [0.00, "#c58ce2"],
+    [0.10, "#c99ae4"],
+    [0.20, "#cea8e7"],
+    [0.30, "#d5b7ea"],
+    [0.40, "#ddc8ee"],
+    [0.50, "#e6dbef"],
+    [0.60, "#efeec8"],
+    [0.70, "#f4f79e"],
+    [0.80, "#edf067"],
+    [0.90, "#e7ec52"],
+    [1.00, "#e1fb43"]
+],
 
         text=text_matrix,
 
