@@ -1458,3 +1458,297 @@ with k5:
 Number of users with at least {POWER_THRESHOLD:,} cross-chain transactions.
 """
     )
+
+# ==========================================================
+# USER BEHAVIOR CONTRIBUTION ANALYSIS
+# ==========================================================
+
+
+analysis_df = user_df.copy()
+
+
+# =========================
+# 1) TRANSACTION BUCKETS
+# =========================
+
+tx_bins = [
+    0,
+    1,
+    5,
+    10,
+    20,
+    50,
+    100,
+    200,
+    500,
+    float("inf")
+]
+
+tx_labels = [
+    "1 Txn",
+    "2-5 Txns",
+    "6-10 Txns",
+    "11-20 Txns",
+    "21-50 Txns",
+    "51-100 Txns",
+    "101-200 Txns",
+    "200-500 Txns",
+    ">500 Txns"
+]
+
+
+analysis_df["tx_bucket"] = pd.cut(
+    analysis_df["num_txs"],
+    bins=tx_bins,
+    labels=tx_labels,
+    include_lowest=True
+)
+
+
+tx_volume_df = (
+    analysis_df
+    .groupby("tx_bucket", observed=False)
+    .agg(
+        volume=("volume","sum"),
+        users=("key","count")
+    )
+    .reset_index()
+)
+
+
+total_volume = tx_volume_df["volume"].sum()
+
+tx_volume_df["volume_share"] = (
+    tx_volume_df["volume"]
+    / total_volume
+    * 100
+)
+
+
+
+# =========================
+# 2) VOLUME BUCKETS
+# =========================
+
+
+volume_bins = [
+    0,
+    100,
+    1000,
+    10000,
+    100000,
+    1000000,
+    float("inf")
+]
+
+
+volume_labels = [
+    "<$100",
+    "$100-$1K",
+    "$1K-$10K",
+    "$10K-$100K",
+    "$100K-$1M",
+    ">$1M"
+]
+
+
+analysis_df["volume_bucket"] = pd.cut(
+    analysis_df["volume"],
+    bins=volume_bins,
+    labels=volume_labels,
+    include_lowest=True
+)
+
+
+volume_tx_df = (
+    analysis_df
+    .groupby("volume_bucket", observed=False)
+    .agg(
+        transactions=("num_txs","sum"),
+        users=("key","count")
+    )
+    .reset_index()
+)
+
+
+total_tx = volume_tx_df["transactions"].sum()
+
+
+volume_tx_df["tx_share"] = (
+    volume_tx_df["transactions"]
+    / total_tx
+    * 100
+)
+
+
+
+# ==========================================================
+# PLOTS
+# ==========================================================
+
+
+col1, col2 = st.columns(2)
+
+
+
+# ==========================================================
+# Transaction Bucket -> Volume Contribution
+# ==========================================================
+
+with col1:
+
+
+    fig = go.Figure()
+
+
+    fig.add_trace(
+        go.Bar(
+            y=tx_volume_df["tx_bucket"],
+            x=tx_volume_df["volume"],
+
+            orientation="h",
+
+            marker=dict(
+                color="#c58ce2"
+            ),
+
+            text=[
+                f"${v:,.0f}<br>{p:.3f}%"
+                for v,p in zip(
+                    tx_volume_df["volume"],
+                    tx_volume_df["volume_share"]
+                )
+            ],
+
+            textposition="outside",
+
+            hovertemplate=
+            "<b>%{y}</b><br>"
+            "Volume: $%{x:,.2f}<br>"
+            "<extra></extra>"
+        )
+    )
+
+
+    fig.update_layout(
+
+        title="Volume Contribution by Transaction Bucket",
+
+        template="plotly_white",
+
+        height=450,
+
+        margin=dict(
+            l=10,
+            r=80,
+            t=50,
+            b=10
+        ),
+
+        xaxis_title="Total Volume ($)",
+
+        yaxis_title=""
+
+    )
+
+
+    fig.update_xaxes(
+        gridcolor="rgba(0,0,0,0.08)"
+    )
+
+
+    fig.update_yaxes(
+        categoryorder="total ascending"
+    )
+
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+
+
+# ==========================================================
+# Volume Bucket -> Transaction Contribution
+# ==========================================================
+
+
+with col2:
+
+
+    fig = go.Figure()
+
+
+    fig.add_trace(
+
+        go.Bar(
+
+            x=volume_tx_df["volume_bucket"],
+
+            y=volume_tx_df["transactions"],
+
+
+            marker=dict(
+                color="#e1fb43"
+            ),
+
+
+            text=[
+                f"{v:,.0f}<br>{p:.3f}%"
+                for v,p in zip(
+                    volume_tx_df["transactions"],
+                    volume_tx_df["tx_share"]
+                )
+            ],
+
+
+            textposition="outside",
+
+
+            hovertemplate=
+            "<b>%{x}</b><br>"
+            "Transactions: %{y:,}<br>"
+            "<extra></extra>"
+
+        )
+
+    )
+
+
+    fig.update_layout(
+
+        title="Transaction Contribution by Volume Bucket",
+
+        template="plotly_white",
+
+        height=450,
+
+        margin=dict(
+            l=10,
+            r=10,
+            t=50,
+            b=10
+        ),
+
+        xaxis_title="Volume Bucket",
+
+        yaxis_title="Transactions"
+
+    )
+
+
+    fig.update_xaxes(
+        showgrid=False
+    )
+
+
+    fig.update_yaxes(
+        gridcolor="rgba(0,0,0,0.08)"
+    )
+
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
