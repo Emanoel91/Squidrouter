@@ -2262,3 +2262,347 @@ st.plotly_chart(
     use_container_width=True
 )
 
+# ==========================================================
+# PROFESSIONAL LORENZ CURVE
+# Part 1 / 2
+# ==========================================================
+
+st.subheader("Lorenz Curve")
+
+st.caption(
+    "The Lorenz Curve visualizes how evenly activity is distributed across users. "
+    "The farther the curve deviates from the line of perfect equality, "
+    "the more concentrated the network activity becomes."
+)
+
+metric = st.selectbox(
+    "Metric",
+    ["Volume", "Transactions"],
+    key="lorenz_metric"
+)
+
+# ==========================================================
+# SELECT METRIC
+# ==========================================================
+
+if metric == "Volume":
+
+    values = (
+        user_df["volume"]
+        .clip(lower=0)
+        .sort_values()
+        .reset_index(drop=True)
+    )
+
+    x_title = "Cumulative Share of Users"
+
+    y_title = "Cumulative Share of Volume"
+
+    color = "#c58ce2"
+
+else:
+
+    values = (
+        user_df["num_txs"]
+        .clip(lower=0)
+        .sort_values()
+        .reset_index(drop=True)
+    )
+
+    x_title = "Cumulative Share of Users"
+
+    y_title = "Cumulative Share of Transactions"
+
+    color = "#e1fb43"
+
+# ==========================================================
+# REMOVE EMPTY USERS
+# ==========================================================
+
+values = values[values > 0].reset_index(drop=True)
+
+n = len(values)
+
+if n == 0:
+
+    st.info("No users found.")
+
+    st.stop()
+
+# ==========================================================
+# LORENZ DATA
+# ==========================================================
+
+cum_users = np.arange(1, n + 1) / n
+
+cum_values = values.cumsum() / values.sum()
+
+lorenz_x = np.insert(cum_users.values, 0, 0)
+
+lorenz_y = np.insert(cum_values.values, 0, 0)
+
+# ==========================================================
+# GINI COEFFICIENT
+# ==========================================================
+
+gini = (
+    np.sum(
+        (2 * np.arange(1, n + 1) - n - 1)
+        * values
+    )
+    /
+    (
+        n * values.sum()
+    )
+)
+
+# ==========================================================
+# GAP FROM PERFECT EQUALITY
+# ==========================================================
+
+gap = lorenz_x - lorenz_y
+
+hover_text = [
+
+    (
+        f"<b>Users</b>: {x*100:.2f}%"
+        f"<br><b>Activity</b>: {y*100:.2f}%"
+        f"<br><b>Gap</b>: {g*100:.2f}%"
+    )
+
+    for x, y, g in zip(
+        lorenz_x,
+        lorenz_y,
+        gap
+    )
+
+]
+
+# ==========================================================
+# CREATE FIGURE
+# ==========================================================
+
+fig = go.Figure()
+
+# ==========================================================
+# PROFESSIONAL LORENZ CURVE
+# Part 2 / 2
+# ==========================================================
+
+# ---------- Perfect Equality Line ----------
+
+fig.add_trace(
+
+    go.Scatter(
+
+        x=[0, 1],
+        y=[0, 1],
+
+        mode="lines",
+
+        line=dict(
+            color="gray",
+            width=2,
+            dash="dash"
+        ),
+
+        name="Perfect Equality",
+
+        hoverinfo="skip"
+
+    )
+
+)
+
+# ---------- Area Between Equality & Lorenz ----------
+
+fig.add_trace(
+
+    go.Scatter(
+
+        x=np.concatenate([lorenz_x, lorenz_x[::-1]]),
+
+        y=np.concatenate([lorenz_x, lorenz_y[::-1]]),
+
+        fill="toself",
+
+        fillcolor="rgba(197,140,226,0.20)",
+
+        line=dict(
+            color="rgba(0,0,0,0)"
+        ),
+
+        hoverinfo="skip",
+
+        name="Inequality Area"
+
+    )
+
+)
+
+# ---------- Lorenz Curve ----------
+
+fig.add_trace(
+
+    go.Scatter(
+
+        x=lorenz_x,
+
+        y=lorenz_y,
+
+        mode="lines",
+
+        line=dict(
+            color=color,
+            width=4
+        ),
+
+        customdata=hover_text,
+
+        hovertemplate="%{customdata}<extra></extra>",
+
+        name="Lorenz Curve"
+
+    )
+
+)
+
+# ---------- Annotation ----------
+
+if gini < 0.30:
+    interpretation = "Low Inequality"
+
+elif gini < 0.60:
+    interpretation = "Moderate Inequality"
+
+elif gini < 0.80:
+    interpretation = "High Inequality"
+
+else:
+    interpretation = "Extreme Concentration"
+
+fig.add_annotation(
+
+    x=0.62,
+
+    y=0.18,
+
+    showarrow=False,
+
+    align="left",
+
+    bgcolor="rgba(255,255,255,0.90)",
+
+    bordercolor=color,
+
+    borderwidth=1,
+
+    text=(
+        f"<b>Gini Coefficient</b><br>"
+        f"{gini:.3f}<br><br>"
+        f"<b>{interpretation}</b>"
+    )
+
+)
+
+# ---------- Layout ----------
+
+fig.update_layout(
+
+    template="plotly_white",
+
+    height=600,
+
+    title=f"Lorenz Curve ({metric}) — Gini = {gini:.3f}",
+
+    margin=dict(
+        l=10,
+        r=10,
+        t=60,
+        b=10
+    ),
+
+    hovermode="closest",
+
+    legend=dict(
+        orientation="h",
+        y=1.03,
+        x=0
+    ),
+
+    xaxis=dict(
+
+        title=x_title,
+
+        tickformat=".0%",
+
+        range=[0,1],
+
+        showgrid=True,
+
+        gridcolor="rgba(0,0,0,0.08)",
+
+        zeroline=False
+
+    ),
+
+    yaxis=dict(
+
+        title=y_title,
+
+        tickformat=".0%",
+
+        range=[0,1],
+
+        showgrid=True,
+
+        gridcolor="rgba(0,0,0,0.08)",
+
+        zeroline=False
+
+    )
+
+)
+
+# ---------- Corner Labels ----------
+
+fig.add_annotation(
+
+    x=0.93,
+
+    y=0.98,
+
+    text="<b>Perfect Equality</b>",
+
+    showarrow=False,
+
+    font=dict(
+        color="gray",
+        size=12
+    )
+
+)
+
+fig.add_annotation(
+
+    x=0.45,
+
+    y=0.30,
+
+    text="<b>Current Distribution</b>",
+
+    showarrow=False,
+
+    font=dict(
+        color=color,
+        size=12
+    )
+
+)
+
+# ---------- Render ----------
+
+st.plotly_chart(
+    fig,
+    use_container_width=True
+)
