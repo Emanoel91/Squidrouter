@@ -2026,31 +2026,58 @@ with col2:
     )
 
 # ==========================================================
-# PARETO CHART
+# PROFESSIONAL PARETO CHART
 # ==========================================================
 
 st.subheader("Pareto Chart")
 
 st.caption(
-    "Shows how cumulative cross-chain volume is distributed across users. "
-    "It helps identify whether a small number of users contribute the majority of total volume (Pareto Principle)."
+    "Illustrates how cumulative activity is distributed across users. "
+    "The Pareto Principle suggests that a relatively small proportion of users "
+    "often contributes the majority of total activity."
 )
+
+metric = st.selectbox(
+    "Metric",
+    ["Volume", "Transactions"],
+    key="pareto_metric"
+)
+
+if metric == "Volume":
+    value_col = "volume"
+    color_bar = "#c58ce2"
+    color_line = "#e1fb43"
+    value_title = "Volume ($)"
+    value_format = "$%{y:,.2f}"
+
+else:
+    value_col = "num_txs"
+    color_bar = "#e1fb43"
+    color_line = "#c58ce2"
+    value_title = "Transactions"
+    value_format = "%{y:,}"
 
 pareto_df = (
     user_df
-    .sort_values("volume", ascending=False)
+    .sort_values(value_col, ascending=False)
     .reset_index(drop=True)
 )
 
 pareto_df["Rank"] = pareto_df.index + 1
 
-pareto_df["CumVolumePct"] = (
-    pareto_df["volume"].cumsum()
-    / pareto_df["volume"].sum()
+pareto_df["CumPct"] = (
+    pareto_df[value_col].cumsum()
+    / pareto_df[value_col].sum()
     * 100
 )
 
+total_users = len(pareto_df)
+
 fig = go.Figure()
+
+# ==========================================================
+# BARS
+# ==========================================================
 
 fig.add_trace(
 
@@ -2058,19 +2085,28 @@ fig.add_trace(
 
         x=pareto_df["Rank"],
 
-        y=pareto_df["volume"],
+        y=pareto_df[value_col],
 
-        marker_color="#c58ce2",
-
-        name="Volume",
+        marker=dict(
+            color=color_bar
+        ),
 
         hovertemplate=
-        "User Rank: %{x}<br>"
-        "Volume: $%{y:,.2f}<extra></extra>"
+        "<b>User Rank %{x}</b><br>"
+        + value_title +
+        ": "
+        + value_format +
+        "<extra></extra>",
+
+        name=value_title
 
     )
 
 )
+
+# ==========================================================
+# CUMULATIVE LINE
+# ==========================================================
 
 fig.add_trace(
 
@@ -2078,12 +2114,12 @@ fig.add_trace(
 
         x=pareto_df["Rank"],
 
-        y=pareto_df["CumVolumePct"],
+        y=pareto_df["CumPct"],
 
         mode="lines",
 
         line=dict(
-            color="#e1fb43",
+            color=color_line,
             width=4
         ),
 
@@ -2092,25 +2128,108 @@ fig.add_trace(
         name="Cumulative Share",
 
         hovertemplate=
-        "Cumulative Share: %{y:.2f}%<extra></extra>"
+        "<b>User Rank %{x}</b><br>"
+        "Cumulative Share: %{y:.2f}%"
+        "<extra></extra>"
 
     )
 
 )
 
+# ==========================================================
+# REFERENCE LEVELS
+# ==========================================================
+
+levels = [50, 80, 95]
+
+level_colors = {
+    50: "#4CAF50",
+    80: "#FF9800",
+    95: "#F44336"
+}
+
+for level in levels:
+
+    idx = pareto_df.index[
+        pareto_df["CumPct"] >= level
+    ][0]
+
+    rank = pareto_df.loc[idx, "Rank"]
+
+    pct_users = rank / total_users * 100
+
+    fig.add_hline(
+        y=level,
+        line_dash="dot",
+        line_color=level_colors[level],
+        yref="y2"
+    )
+
+    fig.add_vline(
+        x=rank,
+        line_dash="dot",
+        line_color=level_colors[level]
+    )
+
+    fig.add_annotation(
+
+        x=rank,
+
+        y=level,
+
+        yref="y2",
+
+        showarrow=True,
+
+        arrowhead=2,
+
+        bgcolor="white",
+
+        bordercolor=level_colors[level],
+
+        text=(
+            f"<b>{level}% of Activity</b><br>"
+            f"Top {pct_users:.2f}% Users"
+        )
+
+    )
+
+# ==========================================================
+# LAYOUT
+# ==========================================================
+
 fig.update_layout(
 
     template="plotly_white",
 
-    height=520,
-
-    title="Pareto Chart",
+    height=620,
 
     hovermode="x unified",
 
-    xaxis_title="Users Ranked by Volume",
+    margin=dict(
+        l=10,
+        r=10,
+        t=50,
+        b=10
+    ),
 
-    yaxis_title="Volume ($)",
+    title=f"Pareto Chart ({metric})",
+
+    xaxis=dict(
+
+        title="Users Ranked by Activity",
+
+        showgrid=False
+
+    ),
+
+    yaxis=dict(
+
+        title=value_title,
+
+        gridcolor="rgba(0,0,0,0.08)"
+
+    ),
 
     yaxis2=dict(
 
@@ -2120,101 +2239,26 @@ fig.update_layout(
 
         side="right",
 
-        range=[0,100]
+        range=[0,100],
+
+        showgrid=False
 
     ),
 
-    margin=dict(l=10,r=10,t=50,b=10)
+    legend=dict(
 
-)
+        orientation="h",
 
-st.plotly_chart(fig, use_container_width=True)
+        y=1.05,
 
-# ==========================================================
-# LORENZ CURVE
-# ==========================================================
-
-st.subheader("Lorenz Curve")
-
-st.caption(
-    "Illustrates inequality in cross-chain volume distribution among users. "
-    "The farther the curve is from the equality line, the more concentrated the activity is."
-)
-
-lorenz = (
-    user_df["volume"]
-    .sort_values()
-    .reset_index(drop=True)
-)
-
-cum_volume = lorenz.cumsum() / lorenz.sum()
-
-cum_users = np.arange(1, len(lorenz)+1) / len(lorenz)
-
-fig = go.Figure()
-
-fig.add_trace(
-
-    go.Scatter(
-
-        x=cum_users,
-
-        y=cum_volume,
-
-        mode="lines",
-
-        line=dict(
-            color="#c58ce2",
-            width=4
-        ),
-
-        fill="tozeroy",
-
-        fillcolor="rgba(197,140,226,0.25)",
-
-        name="Lorenz Curve"
+        x=0
 
     )
 
 )
 
-fig.add_trace(
-
-    go.Scatter(
-
-        x=[0,1],
-
-        y=[0,1],
-
-        mode="lines",
-
-        line=dict(
-            dash="dash",
-            color="gray"
-        ),
-
-        name="Perfect Equality"
-
-    )
-
+st.plotly_chart(
+    fig,
+    use_container_width=True
 )
 
-fig.update_layout(
-
-    template="plotly_white",
-
-    height=520,
-
-    title="Lorenz Curve",
-
-    xaxis_title="Cumulative Share of Users",
-
-    yaxis_title="Cumulative Share of Volume",
-
-    margin=dict(l=10,r=10,t=50,b=10),
-
-    showlegend=True
-
-)
-
-st.plotly_chart(fig, use_container_width=True)
