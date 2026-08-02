@@ -2129,3 +2129,92 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
+# ==========================================================
+# LORENZ CURVE
+# ==========================================================
+
+st.subheader("Lorenz Curve")
+
+st.caption(
+    "Illustrates inequality in cross-chain volume distribution among users. "
+    "The farther the curve is from the equality line, the more concentrated the activity is."
+)
+
+lorenz = (
+    user_df["volume"]
+    .sort_values()
+    .reset_index(drop=True)
+)
+
+cum_volume = lorenz.cumsum() / lorenz.sum()
+
+cum_users = np.arange(1, len(lorenz)+1) / len(lorenz)
+
+fig = go.Figure()
+
+fig.add_trace(
+
+    go.Scatter(
+
+        x=cum_users,
+
+        y=cum_volume,
+
+        mode="lines",
+
+        line=dict(
+            color="#c58ce2",
+            width=4
+        ),
+
+        fill="tozeroy",
+
+        fillcolor="rgba(197,140,226,0.25)",
+
+        name="Lorenz Curve"
+
+    )
+
+)
+
+fig.add_trace(
+
+    go.Scatter(
+
+        x=[0,1],
+
+        y=[0,1],
+
+        mode="lines",
+
+        line=dict(
+            dash="dash",
+            color="gray"
+        ),
+
+        name="Perfect Equality"
+
+    )
+
+)
+
+fig.update_layout(
+
+    template="plotly_white",
+
+    height=520,
+
+    title="Lorenz Curve",
+
+    xaxis_title="Cumulative Share of Users",
+
+    yaxis_title="Cumulative Share of Volume",
+
+    margin=dict(l=10,r=10,t=50,b=10),
+
+    showlegend=True
+
+)
+
+st.plotly_chart(fig, use_container_width=True)
