@@ -206,23 +206,19 @@ def format_number(value, prefix=""):
         return f"{prefix}{value:,}"
 
 # ================ DAILY STATISTICS ================ 
-
 daily_df = filtered_df.copy()
 
 # ================ Volume Statistics ================
-
 max_daily_volume = daily_df["volume"].max()
 median_daily_volume = daily_df["volume"].median()
 avg_daily_volume = daily_df["volume"].mean()
 
 # ================ Transaction Statistics ================
-
 max_daily_tx = int(daily_df["num_txs"].max())
 median_daily_tx = int(daily_df["num_txs"].median())
 avg_daily_tx = int(daily_df["num_txs"].mean())
 
 # ================ DAILY KPI ROW ================
-
 k1, k2, k3, k4, k5, k6 = st.columns(6)
 with k1:
     st.metric("Max Daily Volume", format_number(max_daily_volume, "$"))
@@ -236,7 +232,6 @@ with k5:
     st.metric("Median Daily Txn", format_number(median_daily_tx))
 with k6:
     st.metric("Avg Daily Txn", format_number(avg_daily_tx))
-
 st.divider()
 
 # ================ LOAD FULL DATASET ================
@@ -2318,290 +2313,86 @@ else:
 # ==========================================================
 # REMOVE EMPTY USERS
 # ==========================================================
-
 values = values[values > 0].reset_index(drop=True)
-
 n = len(values)
-
 if n == 0:
-
     st.info("No users found.")
-
     st.stop()
 
 # ==========================================================
 # LORENZ DATA
 # ==========================================================
-
 cum_users = np.arange(1, n + 1) / n
-
 cum_values = values.cumsum() / values.sum()
-
 lorenz_x = np.insert(np.asarray(cum_users), 0, 0)
 lorenz_y = np.insert(np.asarray(cum_values), 0, 0)
 
 # ==========================================================
 # GINI COEFFICIENT
 # ==========================================================
-
-gini = (
-    np.sum(
-        (2 * np.arange(1, n + 1) - n - 1)
-        * values
-    )
-    /
-    (
-        n * values.sum()
-    )
-)
+gini = (np.sum((2 * np.arange(1, n + 1) - n - 1) * values)/(n * values.sum()))
 
 # ==========================================================
 # GAP FROM PERFECT EQUALITY
 # ==========================================================
-
 gap = lorenz_x - lorenz_y
-
 hover_text = [
-
     (
         f"<b>Users</b>: {x*100:.2f}%"
         f"<br><b>Activity</b>: {y*100:.2f}%"
         f"<br><b>Gap</b>: {g*100:.2f}%"
     )
-
     for x, y, g in zip(
         lorenz_x,
         lorenz_y,
         gap
     )
-
 ]
 
 # ==========================================================
 # CREATE FIGURE
 # ==========================================================
-
 fig = go.Figure()
 
 # ==========================================================
 # PROFESSIONAL LORENZ CURVE
-# Part 2 / 2
 # ==========================================================
 
 # ---------- Perfect Equality Line ----------
-
-fig.add_trace(
-
-    go.Scatter(
-
-        x=[0, 1],
-        y=[0, 1],
-
-        mode="lines",
-
-        line=dict(
-            color="gray",
-            width=2,
-            dash="dash"
-        ),
-
-        name="Perfect Equality",
-
-        hoverinfo="skip"
-
-    )
-
-)
+fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode="lines", line=dict(color="gray", width=2, dash="dash"), name="Perfect Equality", hoverinfo="skip"))
 
 # ---------- Area Between Equality & Lorenz ----------
-
-fig.add_trace(
-
-    go.Scatter(
-
-        x=np.concatenate([lorenz_x, lorenz_x[::-1]]),
-
-        y=np.concatenate([lorenz_x, lorenz_y[::-1]]),
-
-        fill="toself",
-
-        fillcolor="rgba(197,140,226,0.20)",
-
-        line=dict(
-            color="rgba(0,0,0,0)"
-        ),
-
-        hoverinfo="skip",
-
-        name="Inequality Area"
-
-    )
-
-)
+fig.add_trace(go.Scatter(x=np.concatenate([lorenz_x, lorenz_x[::-1]]), y=np.concatenate([lorenz_x, lorenz_y[::-1]]), fill="toself",
+        fillcolor="rgba(197,140,226,0.20)", line=dict(color="rgba(0,0,0,0)"), hoverinfo="skip", name="Inequality Area"))
 
 # ---------- Lorenz Curve ----------
-
-fig.add_trace(
-
-    go.Scatter(
-
-        x=lorenz_x,
-
-        y=lorenz_y,
-
-        mode="lines",
-
-        line=dict(
-            color=color,
-            width=4
-        ),
-
-        customdata=hover_text,
-
-        hovertemplate="%{customdata}<extra></extra>",
-
-        name="Lorenz Curve"
-
-    )
-
-)
+fig.add_trace(go.Scatter( x=lorenz_x, y=lorenz_y, mode="lines", line=dict(color=color, width=4), customdata=hover_text, 
+                         hovertemplate="%{customdata}<extra></extra>", name="Lorenz Curve"))
 
 # ---------- Annotation ----------
-
 if gini < 0.30:
     interpretation = "Low Inequality"
-
 elif gini < 0.60:
     interpretation = "Moderate Inequality"
-
 elif gini < 0.80:
     interpretation = "High Inequality"
-
 else:
     interpretation = "Extreme Concentration"
-
-fig.add_annotation(
-
-    x=0.62,
-
-    y=0.18,
-
-    showarrow=False,
-
-    align="left",
-
-    bgcolor="rgba(255,255,255,0.90)",
-
-    bordercolor=color,
-
-    borderwidth=1,
-
-    text=(
+fig.add_annotation(x=0.62, y=0.18, showarrow=False, align="left", bgcolor="rgba(255,255,255,0.90)", bordercolor=color, borderwidth=1, text=(
         f"<b>Gini Coefficient</b><br>"
         f"{gini:.3f}<br><br>"
         f"<b>{interpretation}</b>"
     )
-
 )
 
 # ---------- Layout ----------
-
-fig.update_layout(
-
-    template="plotly_white",
-
-    height=600,
-
-    title=f"Lorenz Curve ({metric}) — Gini = {gini:.3f}",
-
-    margin=dict(
-        l=10,
-        r=10,
-        t=60,
-        b=10
-    ),
-
-    hovermode="closest",
-
-    legend=dict(
-        orientation="h",
-        y=1.03,
-        x=0
-    ),
-
-    xaxis=dict(
-
-        title=x_title,
-
-        tickformat=".0%",
-
-        range=[0,1],
-
-        showgrid=True,
-
-        gridcolor="rgba(0,0,0,0.08)",
-
-        zeroline=False
-
-    ),
-
-    yaxis=dict(
-
-        title=y_title,
-
-        tickformat=".0%",
-
-        range=[0,1],
-
-        showgrid=True,
-
-        gridcolor="rgba(0,0,0,0.08)",
-
-        zeroline=False
-
-    )
-
-)
+fig.update_layout(template="plotly_white", height=600, title=f"Lorenz Curve ({metric}) — Gini = {gini:.3f}", margin=dict(l=10, r=10, t=60, b=10), hovermode="closest",
+    legend=dict(orientation="h", y=1.03, x=0), xaxis=dict(title=x_title, tickformat=".0%", range=[0,1], showgrid=True, gridcolor="rgba(0,0,0,0.08)", zeroline=False),
+    yaxis=dict(title=y_title, tickformat=".0%", range=[0,1], showgrid=True, gridcolor="rgba(0,0,0,0.08)", zeroline=False))
 
 # ---------- Corner Labels ----------
-
-fig.add_annotation(
-
-    x=0.93,
-
-    y=0.98,
-
-    text="<b>Perfect Equality</b>",
-
-    showarrow=False,
-
-    font=dict(
-        color="gray",
-        size=12
-    )
-
-)
-
-fig.add_annotation(
-
-    x=0.45,
-
-    y=0.30,
-
-    text="<b>Current Distribution</b>",
-
-    showarrow=False,
-
-    font=dict(
-        color=color,
-        size=12
-    )
-
-)
+fig.add_annotation(x=0.93, y=0.98, text="<b>Perfect Equality</b>", showarrow=False, font=dict(color="gray", size=12))
+fig.add_annotation(x=0.45, y=0.30, text="<b>Current Distribution</b>", showarrow=False, font=dict(color=color, size=12))
 
 # ---------- Render ----------
-
-st.plotly_chart(
-    fig,
-    use_container_width=True
-)
+st.plotly_chart(fig, use_container_width=True)
