@@ -756,7 +756,7 @@ u1, u2 = st.columns(2)
 with u1:
     user_start_date = st.date_input(
         "Start Date",
-        value=datetime(2024,1,1).date(),
+        value=datetime(2026,1,1).date(),
         key="user_start"
     )
 
