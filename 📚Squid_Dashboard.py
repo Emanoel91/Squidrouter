@@ -2337,9 +2337,8 @@ cum_users = np.arange(1, n + 1) / n
 
 cum_values = values.cumsum() / values.sum()
 
-lorenz_x = np.insert(cum_users.values, 0, 0)
-
-lorenz_y = np.insert(cum_values.values, 0, 0)
+lorenz_x = np.insert(np.asarray(cum_users), 0, 0)
+lorenz_y = np.insert(np.asarray(cum_values), 0, 0)
 
 # ==========================================================
 # GINI COEFFICIENT
