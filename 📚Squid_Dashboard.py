@@ -1808,3 +1808,219 @@ with col2:
         fig,
         use_container_width=True
     )
+
+# ================ TOP 20 USERS ================
+
+top_volume = (
+    user_df
+    .sort_values("volume", ascending=False)
+    .head(20)
+    .copy()
+)
+
+top_tx = (
+    user_df
+    .sort_values("num_txs", ascending=False)
+    .head(20)
+    .copy()
+)
+
+# ---------- Short Address ----------
+
+def short_addr(addr):
+    addr = str(addr)
+    if len(addr) <= 18:
+        return addr
+    return f"{addr[:8]}...{addr[-6:]}"
+
+top_volume["label"] = top_volume["key"].apply(short_addr)
+top_tx["label"] = top_tx["key"].apply(short_addr)
+
+
+# ---------- Color Function ----------
+
+def highlight_colors(df, value_col, default_color):
+
+    colors = [default_color] * len(df)
+
+    if len(df) > 0:
+
+        max_idx = df[value_col].idxmax()
+        min_idx = df[value_col].idxmin()
+
+        colors[df.index.get_loc(max_idx)] = "#8fd17a"   # Soft Green
+        colors[df.index.get_loc(min_idx)] = "#f28b82"   # Soft Red
+
+    return colors
+
+
+volume_colors = highlight_colors(
+    top_volume,
+    "volume",
+    "#c58ce2"
+)
+
+tx_colors = highlight_colors(
+    top_tx,
+    "num_txs",
+    "#e1fb43"
+)
+
+col1, col2 = st.columns(2)
+
+# =====================================================
+# Top 20 Users by Volume
+# =====================================================
+
+with col1:
+
+    fig = go.Figure()
+
+    fig.add_trace(
+
+        go.Bar(
+
+            y=top_volume["label"][::-1],
+
+            x=top_volume["volume"][::-1],
+
+            orientation="h",
+
+            marker=dict(
+                color=volume_colors[::-1]
+            ),
+
+            text=[
+                f"${v:,.0f}"
+                for v in top_volume["volume"][::-1]
+            ],
+
+            textposition="outside",
+
+            cliponaxis=False,
+
+            customdata=top_volume["key"][::-1],
+
+            hovertemplate=
+            "<b>%{customdata}</b><br>"
+            "Volume: <b>$%{x:,.2f}</b>"
+            "<extra></extra>"
+
+        )
+
+    )
+
+    fig.update_layout(
+
+        title="Top 20 Users by Volume",
+
+        template="plotly_white",
+
+        height=670,
+
+        showlegend=False,
+
+        margin=dict(
+            l=10,
+            r=70,
+            t=50,
+            b=10
+        ),
+
+        xaxis_title="Volume ($)",
+
+        yaxis_title=""
+
+    )
+
+    fig.update_xaxes(
+        gridcolor="rgba(0,0,0,0.08)"
+    )
+
+    fig.update_yaxes(
+        showgrid=False
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+
+# =====================================================
+# Top 20 Users by Transactions
+# =====================================================
+
+with col2:
+
+    fig = go.Figure()
+
+    fig.add_trace(
+
+        go.Bar(
+
+            y=top_tx["label"][::-1],
+
+            x=top_tx["num_txs"][::-1],
+
+            orientation="h",
+
+            marker=dict(
+                color=tx_colors[::-1]
+            ),
+
+            text=[
+                f"{v:,}"
+                for v in top_tx["num_txs"][::-1]
+            ],
+
+            textposition="outside",
+
+            cliponaxis=False,
+
+            customdata=top_tx["key"][::-1],
+
+            hovertemplate=
+            "<b>%{customdata}</b><br>"
+            "Transactions: <b>%{x:,}</b>"
+            "<extra></extra>"
+
+        )
+
+    )
+
+    fig.update_layout(
+
+        title="Top 20 Users by Transactions",
+
+        template="plotly_white",
+
+        height=670,
+
+        showlegend=False,
+
+        margin=dict(
+            l=10,
+            r=70,
+            t=50,
+            b=10
+        ),
+
+        xaxis_title="Transactions",
+
+        yaxis_title=""
+
+    )
+
+    fig.update_xaxes(
+        gridcolor="rgba(0,0,0,0.08)"
+    )
+
+    fig.update_yaxes(
+        showgrid=False
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
