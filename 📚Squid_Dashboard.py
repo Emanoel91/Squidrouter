@@ -772,56 +772,112 @@ with u2:
 @st.cache_data(ttl=3600)
 def load_user_data(start_date, end_date):
 
-    from_time = int(datetime.combine(start_date, datetime.min.time()).timestamp())
-    to_time = int(datetime.combine(end_date, datetime.max.time()).timestamp())
+    MAX_RANGE_DAYS = 120
+
+    # -------- Split long date range into chunks --------
+
+    ranges = []
+
+    current_start = start_date
+
+    while current_start <= end_date:
+
+        current_end = min(
+            current_start + timedelta(days=MAX_RANGE_DAYS - 1),
+            end_date
+        )
+
+        ranges.append((current_start, current_end))
+
+        current_start = current_end + timedelta(days=1)
 
     dfs = []
 
+    # -------- Fetch data for every contract and every chunk --------
+
     for contract in CONTRACTS:
 
-        url = (
-            "https://api.axelarscan.io/gmp/GMPTopUsers"
-            f"?contractAddress={contract}"
-            f"&fromTime={from_time}"
-            f"&toTime={to_time}"
-        )
+        for chunk_start, chunk_end in ranges:
 
-        try:
+            from_time = int(
+                datetime.combine(
+                    chunk_start,
+                    datetime.min.time()
+                ).timestamp()
+            )
 
-            r = requests.get(url, timeout=60)
+            to_time = int(
+                datetime.combine(
+                    chunk_end,
+                    datetime.max.time()
+                ).timestamp()
+            )
 
-            if r.status_code != 200:
+            url = (
+                "https://api.axelarscan.io/gmp/GMPTopUsers"
+                f"?contractAddress={contract}"
+                f"&fromTime={from_time}"
+                f"&toTime={to_time}"
+            )
+
+            try:
+
+                r = requests.get(url, timeout=60)
+
+                if r.status_code != 200:
+                    continue
+
+                data = r.json().get("data", [])
+
+                if len(data) == 0:
+                    continue
+
+                df = pd.DataFrame(data)
+
+                dfs.append(df)
+
+            except Exception:
                 continue
-
-            data = r.json().get("data", [])
-
-            if len(data) == 0:
-                continue
-
-            df = pd.DataFrame(data)
-
-            dfs.append(df)
-
-        except Exception:
-            continue
 
     if len(dfs) == 0:
         return pd.DataFrame()
 
-    df = pd.concat(dfs, ignore_index=True)
+    # -------- Merge all returned chunks --------
 
-    df["volume"] = pd.to_numeric(df["volume"], errors="coerce").fillna(0)
-    df["num_txs"] = pd.to_numeric(df["num_txs"], errors="coerce").fillna(0)
+    df = pd.concat(
+        dfs,
+        ignore_index=True
+    )
 
-    # -------- Aggregate same users across contracts --------
+    df["volume"] = (
+        pd.to_numeric(
+            df["volume"],
+            errors="coerce"
+        )
+        .fillna(0)
+    )
+
+    df["num_txs"] = (
+        pd.to_numeric(
+            df["num_txs"],
+            errors="coerce"
+        )
+        .fillna(0)
+    )
+
+    # -------- Aggregate same users across all chunks and contracts --------
 
     df = (
-        df.groupby("key", as_index=False)
+        df
+        .groupby("key", as_index=False)
         .agg(
-            volume=("volume","sum"),
-            num_txs=("num_txs","sum")
+            volume=("volume", "sum"),
+            num_txs=("num_txs", "sum")
         )
-        .sort_values("volume", ascending=False)
+        .sort_values(
+            "volume",
+            ascending=False
+        )
         .reset_index(drop=True)
     )
 
