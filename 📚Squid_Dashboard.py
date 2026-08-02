@@ -2024,3 +2024,108 @@ with col2:
         fig,
         use_container_width=True
     )
+
+# ==========================================================
+# PARETO CHART
+# ==========================================================
+
+st.subheader("Pareto Chart")
+
+st.caption(
+    "Shows how cumulative cross-chain volume is distributed across users. "
+    "It helps identify whether a small number of users contribute the majority of total volume (Pareto Principle)."
+)
+
+pareto_df = (
+    user_df
+    .sort_values("volume", ascending=False)
+    .reset_index(drop=True)
+)
+
+pareto_df["Rank"] = pareto_df.index + 1
+
+pareto_df["CumVolumePct"] = (
+    pareto_df["volume"].cumsum()
+    / pareto_df["volume"].sum()
+    * 100
+)
+
+fig = go.Figure()
+
+fig.add_trace(
+
+    go.Bar(
+
+        x=pareto_df["Rank"],
+
+        y=pareto_df["volume"],
+
+        marker_color="#c58ce2",
+
+        name="Volume",
+
+        hovertemplate=
+        "User Rank: %{x}<br>"
+        "Volume: $%{y:,.2f}<extra></extra>"
+
+    )
+
+)
+
+fig.add_trace(
+
+    go.Scatter(
+
+        x=pareto_df["Rank"],
+
+        y=pareto_df["CumVolumePct"],
+
+        mode="lines",
+
+        line=dict(
+            color="#e1fb43",
+            width=4
+        ),
+
+        yaxis="y2",
+
+        name="Cumulative Share",
+
+        hovertemplate=
+        "Cumulative Share: %{y:.2f}%<extra></extra>"
+
+    )
+
+)
+
+fig.update_layout(
+
+    template="plotly_white",
+
+    height=520,
+
+    title="Pareto Chart",
+
+    hovermode="x unified",
+
+    xaxis_title="Users Ranked by Volume",
+
+    yaxis_title="Volume ($)",
+
+    yaxis2=dict(
+
+        title="Cumulative Share (%)",
+
+        overlaying="y",
+
+        side="right",
+
+        range=[0,100]
+
+    ),
+
+    margin=dict(l=10,r=10,t=50,b=10)
+
+)
+
+st.plotly_chart(fig, use_container_width=True)
